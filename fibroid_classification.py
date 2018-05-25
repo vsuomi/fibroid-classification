@@ -185,3 +185,4 @@ plt.scatter(sample["ADC"], sample["NPV"])
 # display graph
 
 plt.show()
+
