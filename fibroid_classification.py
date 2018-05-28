@@ -188,9 +188,35 @@ plt.scatter(sample["ADC"], sample["NPV"])
 
 plt.show()
 
+#%% create synthetic feature
+
+fibroid_dataframe["nADC"] = (
+    -1*fibroid_dataframe["ADC"])
+
 #%% train using linear regression model function
 
-train_linear_regression_model(input_dataframe=fibroid_dataframe,
+calibration_data = train_linear_regression_model(input_dataframe=fibroid_dataframe,
                               learning_rate=0.00002,
                               steps=800,
-                              batch_size=5)
+                              batch_size=5,
+                              feature_labels="ADC",
+                              target_labels="NPV")
+
+#%% plotting
+
+# predictions vs. targets
+
+plt.figure(figsize=(15, 6))
+plt.subplot(1, 2, 1)
+plt.ylabel('Targets')
+plt.xlabel('Predictions')
+plt.title("Predictions vs. Targets")
+plt.scatter(calibration_data["predictions"], calibration_data["targets"])
+
+# feature histogram
+
+plt.subplot(1, 2, 2)
+plt.ylabel('Number of instances')
+plt.xlabel('ADC')
+plt.title("Feature distribution")
+_ = fibroid_dataframe["ADC"].hist()

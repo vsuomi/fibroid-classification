@@ -152,3 +152,5 @@ def train_linear_regression_model(
     display.display(calibration_data.describe())
     
     print("Final RMSE on training data: %0.2f" % root_mean_squared_error)
+    
+    return calibration_data
