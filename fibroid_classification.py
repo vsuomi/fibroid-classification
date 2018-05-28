@@ -58,7 +58,7 @@ feature_columns = [tf.feature_column.numeric_column("ADC")] # define as numeric
 
 # define labels
 
-targets = fibroid_dataframe["NPV"]
+targets = fibroid_dataframe[["NPV"]]
 
 #%% configure linear regressor model
 

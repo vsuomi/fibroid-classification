@@ -60,7 +60,7 @@ def train_linear_regression_model(
     
     # define targets
 
-    targets = input_dataframe[target_labels]
+    targets = input_dataframe[[target_labels]]
     
     # define input functions
     
