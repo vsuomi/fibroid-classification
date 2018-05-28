@@ -18,15 +18,17 @@ Created on Fri May 25 09:31:49 2018
 
 import math
 
-from IPython import display
-from matplotlib import cm
-from matplotlib import gridspec
+#from IPython import display
+#from matplotlib import cm
+#from matplotlib import gridspec
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import metrics
 import tensorflow as tf
 from tensorflow.python.data import Dataset
+
+from train_linear_regression_model import train_linear_regression_model
 
 #%% define logging and data display format
 
@@ -164,7 +166,7 @@ x_1 = sample["ADC"].max()
 weight = linear_regressor.get_variable_value('linear/linear_model/ADC/weights')[0]
 bias = linear_regressor.get_variable_value('linear/linear_model/bias_weights')
 
-# Get the predicted target values for the min and max selected feature values
+# get the predicted target values for the min and max selected feature values
 
 y_0 = weight * x_0 + bias 
 y_1 = weight * x_1 + bias
@@ -173,7 +175,7 @@ y_1 = weight * x_1 + bias
 
 plt.plot([x_0, x_1], [y_0, y_1], c='r')
 
-# Label the graph axes
+# label the graph axes
 
 plt.ylabel("NPV")
 plt.xlabel("ADC")
@@ -186,3 +188,9 @@ plt.scatter(sample["ADC"], sample["NPV"])
 
 plt.show()
 
+#%% train using linear regression model function
+
+train_linear_regression_model(input_dataframe=fibroid_dataframe,
+                              learning_rate=0.00002,
+                              steps=800,
+                              batch_size=5)
