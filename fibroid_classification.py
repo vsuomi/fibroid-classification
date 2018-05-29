@@ -58,30 +58,40 @@ validation_set = fibroid_dataframe.tail(13)
 
 #%% select features and targets
 
-training_features = training_set[["ADC"]]
+training_features = training_set[["ADC", "T2"]]
 training_targets = training_set[["NPV"]]
 
-validation_features = validation_set[["ADC"]]
+validation_features = validation_set[["ADC", "T2"]]
 validation_targets = validation_set[["NPV"]]
 
 #%% plot training and validation set scatter plot
 
 # training set
 
-plt.figure(figsize=(15, 6))
-plt.subplot(1, 2, 1)
-plt.ylabel("NPV")
-plt.xlabel("ADC")
-plt.title("Training set")
-plt.scatter(training_features, training_targets)
+plt.figure(figsize=(13, 8))
+
+ax = plt.subplot(1, 2, 1)
+plt.xlabel('ADC')
+plt.ylabel('T2')
+ax.set_title("Training data")
+
+plt.scatter(training_features["ADC"],
+            training_features["T2"],
+            cmap="coolwarm",
+            c=training_targets["NPV"] / training_targets["NPV"].max())
+_ = plt.plot()
 
 # validation set
 
-plt.subplot(1, 2, 2)
-plt.ylabel("NPV")
-plt.xlabel("ADC")
-plt.title("Validation set")
-plt.scatter(validation_features, validation_targets)
+ax = plt.subplot(1,2,2)
+plt.xlabel('ADC')
+plt.ylabel('T2')
+ax.set_title("Validation data")
+
+plt.scatter(validation_features["ADC"],
+            validation_features["T2"],
+            cmap="coolwarm",
+            c=validation_targets["NPV"] / validation_targets["NPV"].max())
 
 #%% train using linear regression model function
 
@@ -93,13 +103,3 @@ linear_regressor = train_linear_regression_model(
     training_targets=training_targets,
     validation_features=validation_features,
     validation_targets=validation_targets)
-
-#%% plotting
-
-# feature histogram
-
-plt.subplot(1, 2, 2)
-plt.ylabel('Number of instances')
-plt.xlabel('ADC')
-plt.title("Feature distribution")
-_ = fibroid_dataframe["ADC"].hist()
