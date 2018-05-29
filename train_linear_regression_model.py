@@ -19,24 +19,23 @@ Created on Fri May 25 15:14:38 2018
 
 import math
 
-from IPython import display
-from matplotlib import cm
 from matplotlib import pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn import metrics
 import tensorflow as tf
 from my_input_fn import my_input_fn
+from construct_feature_columns import construct_feature_columns
 
 #%% define function
 
 def train_linear_regression_model(
-        input_dataframe,
         learning_rate, 
         steps, 
         batch_size, 
-        feature_labels="ADC",
-        target_labels="NPV"
+        training_features,
+        training_targets,
+        validation_features,
+        validation_targets
         ):
     
     """
@@ -44,8 +43,13 @@ def train_linear_regression_model(
         learning rate: the learning rate (float)
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
-        feature_labels: features used for training (string)
-        target_labels: targets used for training (string)
+        training_features: one or more columns of training features (DataFrame)
+        training_targets: a single column of training targets (DataFrame)
+        calidation_features: one or more columns of validation features (DataFrame)
+        validation_targets: a single column of validation targets (DataFrame)
+        
+    Returns:
+        A `LinearRegressor` object trained on the training data
     """
     
     # define periods
@@ -53,44 +57,38 @@ def train_linear_regression_model(
     periods = 10
     steps_per_period = steps / periods
     
-    # define features
-    
-    features = input_dataframe[[feature_labels]]
-    feature_columns = [tf.feature_column.numeric_column(feature_labels)] # define as numeric
-    
-    # define targets
-
-    targets = input_dataframe[[target_labels]]
-    
-    # define input functions
-    
-    training_input_fn = lambda:my_input_fn(features, targets, batch_size=batch_size)
-    prediction_input_fn = lambda:my_input_fn(features, targets, num_epochs=1, shuffle=False)
-    
     # create linear regressor object
     
     my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     linear_regressor = tf.estimator.LinearRegressor(
-            feature_columns=feature_columns,
+            feature_columns=construct_feature_columns(training_features),
             optimizer=my_optimiser)
     
-    # plot regression line each period
+    # define input functions
     
-    plt.figure(figsize=(15, 6))
-    plt.subplot(1, 2, 1)
-    plt.title("Learned regression line in each period")
-    plt.ylabel(target_labels)
-    plt.xlabel(feature_labels)
-    sample = input_dataframe.sample(n=len(input_dataframe))
-    plt.scatter(sample[feature_labels], sample[target_labels])
-    colors = [cm.coolwarm(x) for x in np.linspace(-1, 1, periods)]
+    training_input_fn = lambda: my_input_fn(
+      training_features, 
+      training_targets["NPV"], 
+      batch_size=batch_size)
+    predict_training_input_fn = lambda: my_input_fn(
+      training_features, 
+      training_targets["NPV"], 
+      num_epochs=1, 
+      shuffle=False)
+    predict_validation_input_fn = lambda: my_input_fn(
+      validation_features, 
+      validation_targets["NPV"], 
+      num_epochs=1, 
+      shuffle=False)
     
     # print training progress
     
     print("Model training started")
     print("RMSE on training data:")
-    root_mean_squared_errors = []
+    
+    training_rmse = []
+    validation_rmse = []
 
     for period in range (0, periods):
                
@@ -103,54 +101,38 @@ def train_linear_regression_model(
                 
         # compute predictions
         
-        predictions = linear_regressor.predict(input_fn=prediction_input_fn)
-        predictions = np.array([item['predictions'][0] for item in predictions])
+        training_predictions = linear_regressor.predict(input_fn=predict_training_input_fn)
+        training_predictions = np.array([item['predictions'][0] for item in training_predictions])
         
-        # calculate loss
+        validation_predictions = linear_regressor.predict(input_fn=predict_validation_input_fn)
+        validation_predictions = np.array([item['predictions'][0] for item in validation_predictions])
         
-        root_mean_squared_error = math.sqrt(
-                metrics.mean_squared_error(predictions, targets))
+        # calculate losses
+        
+        training_root_mean_squared_error = math.sqrt(
+                metrics.mean_squared_error(training_predictions, training_targets))
+        validation_root_mean_squared_error = math.sqrt(
+                metrics.mean_squared_error(validation_predictions, validation_targets))
         
         # print the current loss
         
-        print("Period %02d: %0.2f" % (period, root_mean_squared_error))
+        print("Period %02d: %0.2f" % (period, training_root_mean_squared_error))
         
         # add loss metrics to the list
         
-        root_mean_squared_errors.append(root_mean_squared_error)
-        
-        # track the weights and biases over time
-        
-        y_extents = np.array([0, sample[target_labels].max()])
-                
-        weight = linear_regressor.get_variable_value('linear/linear_model/%s/weights' % feature_labels)[0]
-        bias = linear_regressor.get_variable_value('linear/linear_model/bias_weights')
-    
-        x_extents = (y_extents - bias) / weight
-        x_extents = np.maximum(np.minimum(x_extents,
-                                          sample[feature_labels].max()),
-                               sample[feature_labels].min())
-        y_extents = weight * x_extents + bias
-        plt.plot(x_extents, y_extents, color=colors[period])
+        training_rmse.append(training_root_mean_squared_error)
+        validation_rmse.append(validation_root_mean_squared_error)
         
     print("Model training finished")
     
-    # print loss metrics over periods
+    # plot loss metrics over periods
     
-    plt.subplot(1, 2, 2)
     plt.ylabel('RMSE')
     plt.xlabel('Periods')
     plt.title("Root Mean Squared Error vs. Periods")
     plt.tight_layout()
-    plt.plot(root_mean_squared_errors)
+    plt.plot(training_rmse, label="Training")
+    plt.plot(validation_rmse, label="Validation")
+    plt.legend()
     
-    # output a table with calibration data
-    
-    calibration_data = pd.DataFrame()
-    calibration_data["predictions"] = pd.Series(predictions)
-    calibration_data["targets"] = pd.Series(targets)
-    display.display(calibration_data.describe())
-    
-    print("Final RMSE on training data: %0.2f" % root_mean_squared_error)
-    
-    return calibration_data
+    return linear_regressor
