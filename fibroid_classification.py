@@ -18,7 +18,7 @@ Created on Fri May 25 09:31:49 2018
 
 #import math
 
-#from IPython import display
+from IPython import display
 #from matplotlib import cm
 #from matplotlib import gridspec
 from matplotlib import pyplot as plt
@@ -48,13 +48,42 @@ fibroid_dataframe = fibroid_dataframe.reindex(np.random.permutation(fibroid_data
 
 # examine data
 
-fibroid_dataframe.head() # first five entries
-fibroid_dataframe.describe() # statistics
+print("\nFirst five entries of the data:\n")
+display.display(fibroid_dataframe.head())
+print("\nSummary of the data:\n")
+display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
 training_set = fibroid_dataframe.head(30)
 validation_set = fibroid_dataframe.tail(13)
+
+#%% display correlation matrix to help select suitable features
+
+print("\nCorrelation matrix:\n")
+display.display(training_set.corr())
+
+#%% display histogram and scatter plot of a selected feature
+
+plot_feature = "ADC" # select the feature to plot
+
+plt.figure(figsize=(13, 4))
+
+# histogram
+
+plt.subplot(1, 2, 1)
+plt.xlabel("%s" % plot_feature)
+plt.ylabel('Number of instances')
+plt.title("Feature value distribution")
+training_set[plot_feature].hist()
+
+# scatter plot
+
+plt.subplot(1, 2, 2)
+plt.xlabel("%s" % plot_feature)
+plt.ylabel("NPV")
+plt.title("Correlation of variables")
+plt.scatter(training_set[plot_feature], training_set["NPV"])
 
 #%% select features and targets
 
@@ -66,28 +95,25 @@ validation_targets = validation_set[["NPV"]]
 
 #%% plot training and validation set scatter plot
 
+plt.figure(figsize=(13, 4))
+
 # training set
 
-plt.figure(figsize=(13, 8))
-
-ax = plt.subplot(1, 2, 1)
-plt.xlabel('ADC')
-plt.ylabel('T2')
-ax.set_title("Training data")
-
+plt.subplot(1, 2, 1)
+plt.xlabel("ADC")
+plt.ylabel("T2")
+plt.title("Training data")
 plt.scatter(training_features["ADC"],
             training_features["T2"],
             cmap="coolwarm",
             c=training_targets["NPV"] / training_targets["NPV"].max())
-_ = plt.plot()
 
 # validation set
 
-ax = plt.subplot(1,2,2)
-plt.xlabel('ADC')
-plt.ylabel('T2')
-ax.set_title("Validation data")
-
+plt.subplot(1,2,2)
+plt.xlabel("ADC")
+plt.ylabel("T2")
+plt.title("Validation data")
 plt.scatter(validation_features["ADC"],
             validation_features["T2"],
             cmap="coolwarm",
