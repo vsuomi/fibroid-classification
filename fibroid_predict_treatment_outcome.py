@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 25 09:31:49 2018
+Created on Thu May 31 09:09:30 2018
 
 @author:
     
@@ -10,8 +10,8 @@ Created on Fri May 25 09:31:49 2018
     
 @description:
     
-    This code is used to classify the treatability of uterine fibroids before
-    HIFU therapy based on their pre-treatment MR parameters
+    This code is used to predict the HIFU therapy outcome (non-perfused volume)
+    for uterine fibroids based on their pre-treatment MR parameters
     
 """
 
@@ -25,12 +25,11 @@ from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+#from sklearn import metrics
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
-from train_linear_classification_model import train_linear_classification_model
-from my_input_fn import my_input_fn
+from train_linear_regression_model import train_linear_regression_model
 
 #%% define logging and data display format
 
@@ -41,10 +40,6 @@ pd.options.display.float_format = '{:.1f}'.format
 #%% read data
 
 fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\Test_data.csv", sep=",")
-
-#%% add new feature for logistic regression
-
-fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV"] > 75).astype(float) # NPV above 75%
 
 #%% format data
 
@@ -94,10 +89,10 @@ plt.scatter(training_set[plot_feature], training_set["NPV"])
 #%% select features and targets
 
 training_features = training_set[["ADC", "T2"]]
-training_targets = training_set[["NPV_is_high"]]
+training_targets = training_set[["NPV"]]
 
 validation_features = validation_set[["ADC", "T2"]]
-validation_targets = validation_set[["NPV_is_high"]]
+validation_targets = validation_set[["NPV"]]
 
 #%% plot training and validation set scatter plot
 
@@ -112,7 +107,7 @@ plt.title("Training data")
 plt.scatter(training_features["ADC"],
             training_features["T2"],
             cmap="coolwarm",
-            c=training_targets["NPV_is_high"])
+            c=training_targets["NPV"] / training_targets["NPV"].max())
 
 # validation set
 
@@ -123,11 +118,11 @@ plt.title("Validation data")
 plt.scatter(validation_features["ADC"],
             validation_features["T2"],
             cmap="coolwarm",
-            c=validation_targets["NPV_is_high"])
+            c=validation_targets["NPV"] / validation_targets["NPV"].max())
 
-#%% train using linear classification model function
+#%% train using linear regression model function
 
-linear_classifier = train_linear_classification_model(
+linear_regressor = train_linear_regression_model(
     learning_rate=0.00002,
     steps=800,
     batch_size=5,
@@ -135,26 +130,3 @@ linear_classifier = train_linear_classification_model(
     training_targets=training_targets,
     validation_features=validation_features,
     validation_targets=validation_targets)
-
-#%% calculate accuracy on validation set
-
-predict_validation_input_fn = lambda: my_input_fn(validation_features, 
-                                                  validation_targets["NPV_is_high"], 
-                                                  num_epochs=1, 
-                                                  shuffle=False)
-
-evaluation_metrics = linear_classifier.evaluate(input_fn=predict_validation_input_fn)
-
-print("AUC on the validation set: %0.2f" % evaluation_metrics['auc'])
-print("Accuracy on the validation set: %0.2f" % evaluation_metrics['accuracy'])
-
-#%% calculate ROC curve
-
-validation_probabilities = linear_classifier.predict(input_fn=predict_validation_input_fn)
-validation_probabilities = np.array([item['probabilities'][1] for item in validation_probabilities])
-
-false_positive_rate, true_positive_rate, thresholds = metrics.roc_curve(
-    validation_targets, validation_probabilities)
-plt.plot(false_positive_rate, true_positive_rate, label="Our model")
-plt.plot([0, 1], [0, 1], label="Random classifier")
-_ = plt.legend(loc=4)
