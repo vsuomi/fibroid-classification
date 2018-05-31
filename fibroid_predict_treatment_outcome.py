@@ -30,6 +30,7 @@ import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
 from train_linear_regression_model import train_linear_regression_model
+from scale_features import scale_features
 
 #%% define logging and data display format
 
@@ -119,6 +120,11 @@ plt.scatter(validation_features["ADC"],
             validation_features["T2"],
             cmap="coolwarm",
             c=validation_targets["NPV"] / validation_targets["NPV"].max())
+
+#%% scale features
+
+#training_features = scale_features(training_features)
+#validation_features = scale_features(validation_features)
 
 #%% train using linear regression model function
 
