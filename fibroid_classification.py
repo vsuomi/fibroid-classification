@@ -31,6 +31,7 @@ import tensorflow as tf
 
 from train_linear_classification_model import train_linear_classification_model
 from my_input_fn import my_input_fn
+from scale_features import scale_features
 
 #%% define logging and data display format
 
@@ -124,6 +125,11 @@ plt.scatter(validation_features["ADC"],
             validation_features["T2"],
             cmap="coolwarm",
             c=validation_targets["NPV_is_high"])
+
+#%% scale features
+
+training_features = scale_features(training_features)
+validation_features = scale_features(validation_features)
 
 #%% train using linear classification model function
 
