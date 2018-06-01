@@ -16,20 +16,30 @@ Created on Thu May 31 11:38:48 2018
 
 #%% import necessary packages
 
-
+import numpy as np
 
 #%% define function
 
-def scale_features(features):
+def scale_features(features, scaling):
     
     """ Scales given features with standard deviation
     
     Args:
         features: pandas Dataframe of features
+        scaling: type of scaling: z-score (default), linear ("linear") 
+        or logarithmic ("log")
     Returns:
         scaled_features: scaled features with zero mean and unit variance
     """
     
-    scaled_features = (features - features.mean()) / features.std()
+    if scaling == "linear":
+        min_val = features.min()
+        max_val = features.max()
+        scale = (max_val - min_val) / 2.0
+        scaled_features = (features - min_val) / scale - 1.0
+    elif scaling == "log":
+        scaled_features = np.log(features + 1.0)
+    else:
+        scaled_features = (features - features.mean()) / features.std()
     
     return scaled_features
