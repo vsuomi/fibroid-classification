@@ -30,7 +30,8 @@ import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
 from train_linear_regression_model import train_linear_regression_model
-from scale_features import scale_features
+from train_neural_network_regression_model import train_neural_network_regression_model
+#from scale_features import scale_features
 
 #%% define logging and data display format
 
@@ -132,6 +133,18 @@ linear_regressor = train_linear_regression_model(
     learning_rate=0.00002,
     steps=800,
     batch_size=5,
+    training_features=training_features,
+    training_targets=training_targets,
+    validation_features=validation_features,
+    validation_targets=validation_targets)
+
+#%% train using neural network regression model function
+
+dnn_regressor = train_neural_network_regression_model(
+    learning_rate=0.00002,
+    steps=800,
+    batch_size=5,
+    hidden_units = [10, 10],
     training_features=training_features,
     training_targets=training_targets,
     validation_features=validation_features,
