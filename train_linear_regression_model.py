@@ -136,4 +136,7 @@ def train_linear_regression_model(
     plt.plot(validation_rmse, label="Validation")
     plt.legend()
     
+    print("Final RMSE (on training data):   %0.2f" % training_root_mean_squared_error)
+    print("Final RMSE (on validation data): %0.2f" % validation_root_mean_squared_error)
+    
     return linear_regressor

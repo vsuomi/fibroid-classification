@@ -59,6 +59,8 @@ def train_linear_classification_model(
     
     my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
     #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate) # for high-dimensional linear models
+    #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, 
+    #                                      l1_regularization_strength=0.0) # for L1 regularisation change the regularisation strength
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     linear_classifier = tf.estimator.LinearClassifier(
             feature_columns=construct_feature_columns(training_features),
@@ -131,5 +133,8 @@ def train_linear_classification_model(
     plt.plot(training_log_losses, label="Training")
     plt.plot(validation_log_losses, label="Validation")
     plt.legend()
+    
+    print("Final LogLoss (on training data):   %0.2f" % training_log_loss)
+    print("Final LogLoss (on validation data): %0.2f" % validation_log_loss)
     
     return linear_classifier
