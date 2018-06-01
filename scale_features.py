@@ -26,8 +26,8 @@ def scale_features(features, scaling):
     
     Args:
         features: pandas Dataframe of features
-        scaling: type of scaling: z-score (default), linear ("linear") 
-        or logarithmic ("log")
+        scaling: type of scaling: linear ("linear"), logarithmic ("log") or
+        z-score ("z-score")
     Returns:
         scaled_features: scaled features with zero mean and unit variance
     """
@@ -39,7 +39,10 @@ def scale_features(features, scaling):
         scaled_features = (features - min_val) / scale - 1.0
     elif scaling == "log":
         scaled_features = np.log(features + 1.0)
-    else:
+    elif scaling == "z-score":
         scaled_features = (features - features.mean()) / features.std()
+    else:
+        print("Unknown scaling type")
+        scaled_features = features
     
     return scaled_features
