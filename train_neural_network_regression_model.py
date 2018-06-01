@@ -62,7 +62,8 @@ def train_neural_network_regression_model(
     # create linear regressor object
     
     my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate) # for high-dimensional linear models
+    #my_optimiser = tf.train.AdagradOptimizer(learning_rate=learning_rate) # for convex problems
+    #my_optimiser = tf.train.AdamOptimizer(learning_rate=learning_rate) # for non-convex problems
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns=construct_feature_columns(training_features),
