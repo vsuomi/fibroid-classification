@@ -136,6 +136,7 @@ def train_neural_network_regression_model(
     plt.xlabel('Periods')
     plt.title("Root Mean Squared Error vs. Periods")
     plt.tight_layout()
+    plt.grid()
     plt.plot(training_rmse, label="Training")
     plt.plot(validation_rmse, label="Validation")
     plt.legend()

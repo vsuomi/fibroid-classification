@@ -70,19 +70,14 @@ display.display(training_set.corr())
 
 plot_feature = "ADC" # select the feature to plot
 
-plt.figure(figsize=(13, 4))
-
 # histogram
 
-plt.subplot(1, 2, 1)
-plt.xlabel("%s" % plot_feature)
-plt.ylabel('Number of instances')
-plt.title("Feature value distribution")
-training_set[plot_feature].hist()
+training_set.hist(bins=20, figsize=(13, 6), xlabelsize=10)
 
 # scatter plot
 
-plt.subplot(1, 2, 2)
+plt.figure(figsize=(6, 4))
+plt.grid()
 plt.xlabel("%s" % plot_feature)
 plt.ylabel("NPV")
 plt.title("Correlation of variables")
@@ -103,6 +98,7 @@ plt.figure(figsize=(13, 4))
 # training set
 
 plt.subplot(1, 2, 1)
+plt.grid()
 plt.xlabel("ADC")
 plt.ylabel("T2")
 plt.title("Training data")
@@ -114,6 +110,7 @@ plt.scatter(training_features["ADC"],
 # validation set
 
 plt.subplot(1,2,2)
+plt.grid()
 plt.xlabel("ADC")
 plt.ylabel("T2")
 plt.title("Validation data")

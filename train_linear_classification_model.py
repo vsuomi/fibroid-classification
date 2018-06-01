@@ -130,6 +130,7 @@ def train_linear_classification_model(
     plt.xlabel('Periods')
     plt.title("LogLoss vs. Periods")
     plt.tight_layout()
+    plt.grid()
     plt.plot(training_log_losses, label="Training")
     plt.plot(validation_log_losses, label="Validation")
     plt.legend()
