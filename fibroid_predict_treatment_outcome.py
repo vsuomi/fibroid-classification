@@ -22,14 +22,14 @@ Created on Thu May 31 09:09:30 2018
 from IPython import display
 #from matplotlib import cm
 #from matplotlib import gridspec
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 #from sklearn import metrics
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
-from train_linear_regression_model import train_linear_regression_model
+#from train_linear_regression_model import train_linear_regression_model
 from train_neural_network_regression_model import train_neural_network_regression_model
 from scale_features import scale_features
 
@@ -41,7 +41,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\Test_data.csv", sep=",")
+fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv", sep=",")
 
 #%% format data
 
@@ -58,90 +58,42 @@ display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
-training_set = fibroid_dataframe.head(30)
-validation_set = fibroid_dataframe.tail(13)
+num_training = round(0.7*len(fibroid_dataframe))
+num_validation = len(fibroid_dataframe) - num_training
+
+training_set = fibroid_dataframe.head(num_training)
+validation_set = fibroid_dataframe.tail(num_validation)
 
 #%% display correlation matrix to help select suitable features
 
 print("\nCorrelation matrix:\n")
 display.display(training_set.corr())
 
-#%% display histogram and scatter plot of a selected feature
-
-plot_feature = "ADC" # select the feature to plot
-
-# histogram
-
-training_set.hist(bins=20, figsize=(13, 6), xlabelsize=10)
-
-# scatter plot
-
-plt.figure(figsize=(6, 4))
-plt.grid()
-plt.xlabel("%s" % plot_feature)
-plt.ylabel("NPV")
-plt.title("Correlation of variables")
-plt.scatter(training_set[plot_feature], training_set["NPV"])
-
 #%% select features and targets
 
-training_features = training_set[["ADC", "T2"]]
-training_targets = training_set[["NPV"]]
+training_features = training_set[["Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+                                  "Fibroid_volume"]]
+training_targets = training_set[["NPV_percent"]]
 
-validation_features = validation_set[["ADC", "T2"]]
-validation_targets = validation_set[["NPV"]]
-
-#%% plot training and validation set scatter plot
-
-plt.figure(figsize=(13, 4))
-
-# training set
-
-plt.subplot(1, 2, 1)
-plt.grid()
-plt.xlabel("ADC")
-plt.ylabel("T2")
-plt.title("Training data")
-plt.scatter(training_features["ADC"],
-            training_features["T2"],
-            cmap="coolwarm",
-            c=training_targets["NPV"] / training_targets["NPV"].max())
-
-# validation set
-
-plt.subplot(1,2,2)
-plt.grid()
-plt.xlabel("ADC")
-plt.ylabel("T2")
-plt.title("Validation data")
-plt.scatter(validation_features["ADC"],
-            validation_features["T2"],
-            cmap="coolwarm",
-            c=validation_targets["NPV"] / validation_targets["NPV"].max())
+validation_features = validation_set[["Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+                                  "Fibroid_volume"]]
+validation_targets = validation_set[["NPV_percent"]]
 
 #%% scale features
 
 scaled_training_features = scale_features(training_features, "z-score")
 scaled_validation_features = scale_features(validation_features, "z-score")
 
-#%% train using linear regression model
-
-linear_regressor = train_linear_regression_model(
-    learning_rate=0.00002,
-    steps=800,
-    batch_size=5,
-    training_features=training_features,
-    training_targets=training_targets,
-    validation_features=validation_features,
-    validation_targets=validation_targets)
-
 #%% train using neural network regression model
 
 dnn_regressor = train_neural_network_regression_model(
-    learning_rate=0.00002,
-    steps=800,
-    batch_size=5,
-    hidden_units = [10, 10],
+    learning_rate=0.001,
+    steps=2000,
+    batch_size=10,
+    hidden_units = [25],
+    optimiser = "Adam",
     training_features=scaled_training_features,
     training_targets=training_targets,
     validation_features=scaled_validation_features,
