@@ -33,6 +33,7 @@ def train_neural_network_regression_model(
         steps, 
         batch_size,
         hidden_units,
+        optimiser,
         training_features,
         training_targets,
         validation_features,
@@ -45,6 +46,7 @@ def train_neural_network_regression_model(
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
         hidden_units: number of neurons in each layrs (list)
+        optimiser: type of the optimiser (GradientDescent, Adagrad, Adam)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
         calidation_features: one or more columns of validation features (DataFrame)
@@ -61,9 +63,14 @@ def train_neural_network_regression_model(
     
     # create linear regressor object
     
-    my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    #my_optimiser = tf.train.AdagradOptimizer(learning_rate=learning_rate) # for convex problems
-    #my_optimiser = tf.train.AdamOptimizer(learning_rate=learning_rate) # for non-convex problems
+    if optimiser == "GradientDescent":
+        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    elif optimiser == "Adagrad":
+        my_optimiser = tf.train.AdagradOptimizer(learning_rate=learning_rate) # for convex problems
+    elif optimiser == "Adam":
+        my_optimiser = tf.train.AdamOptimizer(learning_rate=learning_rate) # for non-convex problems
+    else:
+        print("Unknown optimiser type")
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns=construct_feature_columns(training_features),
@@ -74,16 +81,16 @@ def train_neural_network_regression_model(
     
     training_input_fn = lambda: my_input_fn(
       training_features, 
-      training_targets["NPV"], 
+      training_targets, 
       batch_size=batch_size)
     predict_training_input_fn = lambda: my_input_fn(
       training_features, 
-      training_targets["NPV"], 
+      training_targets, 
       num_epochs=1, 
       shuffle=False)
     predict_validation_input_fn = lambda: my_input_fn(
       validation_features, 
-      validation_targets["NPV"], 
+      validation_targets, 
       num_epochs=1, 
       shuffle=False)
     
@@ -132,14 +139,32 @@ def train_neural_network_regression_model(
     
     # plot loss metrics over periods
     
-    plt.ylabel('RMSE')
-    plt.xlabel('Periods')
+    plt.figure(figsize=(13, 4))
+    
+    plt.subplot(1, 2, 1)
+    plt.ylabel("RMSE")
+    plt.xlabel("Periods")
     plt.title("Root Mean Squared Error vs. Periods")
     plt.tight_layout()
     plt.grid()
     plt.plot(training_rmse, label="Training")
     plt.plot(validation_rmse, label="Validation")
     plt.legend()
+    
+    # plot predictions scatter plot
+    
+    plt.subplot(1, 2, 2)
+    plt.xlabel("Targets")
+    plt.ylabel("Predictions")
+    plt.title("Prediction accuracy")
+    plt.tight_layout()
+    plt.grid()
+    plt.scatter(training_targets, training_predictions, label="Training")
+    plt.scatter(validation_targets, validation_predictions, label="Validation")
+    plt.plot([0, 100], [0, 100], color="k")
+    plt.legend()
+    
+    # display final errors
     
     print("Final RMSE (on training data):   %0.2f" % training_root_mean_squared_error)
     print("Final RMSE (on validation data): %0.2f" % validation_root_mean_squared_error)
