@@ -22,15 +22,15 @@ Created on Fri May 25 09:31:49 2018
 from IPython import display
 #from matplotlib import cm
 #from matplotlib import gridspec
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+#from sklearn import metrics
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
 from train_linear_classification_model import train_linear_classification_model
-from my_input_fn import my_input_fn
+from train_neural_network_classification_model import train_neural_network_classification_model
 from scale_features import scale_features
 
 #%% define logging and data display format
@@ -41,11 +41,11 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\Test_data.csv", sep=",")
+fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv", sep=",")
 
 #%% add new feature for logistic regression
 
-fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV"] > 75).astype(float) # NPV above 75%
+fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV_percent"] > 75).astype(float) # NPV above 75%
 
 #%% format data
 
@@ -62,103 +62,55 @@ display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
-training_set = fibroid_dataframe.head(30)
-validation_set = fibroid_dataframe.tail(13)
+num_training = round(0.7*len(fibroid_dataframe))
+num_validation = len(fibroid_dataframe) - num_training
+
+training_set = fibroid_dataframe.head(num_training)
+validation_set = fibroid_dataframe.tail(num_validation)
 
 #%% display correlation matrix to help select suitable features
 
 print("\nCorrelation matrix:\n")
 display.display(training_set.corr())
 
-#%% display histogram and scatter plot of a selected feature
-
-plot_feature = "ADC" # select the feature to plot
-
-# histogram
-
-training_set.hist(bins=20, figsize=(13, 6), xlabelsize=10)
-
-# scatter plot
-
-plt.figure(figsize=(6, 4))
-plt.grid()
-plt.xlabel("%s" % plot_feature)
-plt.ylabel("NPV")
-plt.title("Correlation of variables")
-plt.scatter(training_set[plot_feature], training_set["NPV"])
-
 #%% select features and targets
 
-training_features = training_set[["ADC", "T2"]]
+training_features = training_set[["Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+                                  "Fibroid_volume"]]
 training_targets = training_set[["NPV_is_high"]]
 
-validation_features = validation_set[["ADC", "T2"]]
+validation_features = validation_set[["Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+                                  "Fibroid_volume"]]
 validation_targets = validation_set[["NPV_is_high"]]
-
-#%% plot training and validation set scatter plot
-
-plt.figure(figsize=(13, 4))
-
-# training set
-
-plt.subplot(1, 2, 1)
-plt.grid()
-plt.xlabel("ADC")
-plt.ylabel("T2")
-plt.title("Training data")
-plt.scatter(training_features["ADC"],
-            training_features["T2"],
-            cmap="coolwarm",
-            c=training_targets["NPV_is_high"])
-
-# validation set
-
-plt.subplot(1,2,2)
-plt.grid()
-plt.xlabel("ADC")
-plt.ylabel("T2")
-plt.title("Validation data")
-plt.scatter(validation_features["ADC"],
-            validation_features["T2"],
-            cmap="coolwarm",
-            c=validation_targets["NPV_is_high"])
 
 #%% scale features
 
-training_features = scale_features(training_features)
-validation_features = scale_features(validation_features)
+scaled_training_features = scale_features(training_features, "z-score")
+scaled_validation_features = scale_features(validation_features, "z-score")
 
 #%% train using linear classification model function
 
 linear_classifier = train_linear_classification_model(
-    learning_rate=0.00002,
-    steps=800,
-    batch_size=5,
-    training_features=training_features,
-    training_targets=training_targets,
-    validation_features=validation_features,
-    validation_targets=validation_targets)
+    learning_rate = 0.000001,
+    steps = 1000,
+    batch_size = 20,
+    optimiser = "Ftrl",
+    training_features = scaled_training_features,
+    training_targets = training_targets,
+    validation_features = scaled_validation_features,
+    validation_targets = validation_targets)
 
-#%% calculate accuracy on validation set
+#%% train using neural network classification model function
 
-predict_validation_input_fn = lambda: my_input_fn(validation_features, 
-                                                  validation_targets["NPV_is_high"], 
-                                                  num_epochs=1, 
-                                                  shuffle=False)
-
-evaluation_metrics = linear_classifier.evaluate(input_fn=predict_validation_input_fn)
-
-print("AUC on the validation set: %0.2f" % evaluation_metrics['auc'])
-print("Accuracy on the validation set: %0.2f" % evaluation_metrics['accuracy'])
-
-#%% calculate ROC curve
-
-validation_probabilities = linear_classifier.predict(input_fn=predict_validation_input_fn)
-validation_probabilities = np.array([item['probabilities'][1] for item in validation_probabilities])
-
-false_positive_rate, true_positive_rate, thresholds = metrics.roc_curve(
-    validation_targets, validation_probabilities)
-plt.plot(false_positive_rate, true_positive_rate, label="Our model")
-plt.grid()
-plt.plot([0, 1], [0, 1], label="Random classifier")
-_ = plt.legend(loc=4)
+dnn_classifier = train_neural_network_classification_model(
+    learning_rate = 0.0001,
+    steps = 2000,
+    batch_size = 10,
+    hidden_units = [10, 10],
+    optimiser = "Adagrad",
+    training_features = scaled_training_features,
+    training_targets = training_targets,
+    validation_features = scaled_validation_features,
+    validation_targets = validation_targets)

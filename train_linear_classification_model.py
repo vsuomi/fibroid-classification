@@ -30,6 +30,7 @@ def train_linear_classification_model(
         learning_rate, 
         steps, 
         batch_size, 
+        optimiser,
         training_features,
         training_targets,
         validation_features,
@@ -41,6 +42,7 @@ def train_linear_classification_model(
         learning rate: the learning rate (float)
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
+        optimiser: type of the optimiser (GradientDescent, Ftrl)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
         calidation_features: one or more columns of validation features (DataFrame)
@@ -55,33 +57,36 @@ def train_linear_classification_model(
     periods = 10
     steps_per_period = steps / periods
     
-    # create linear regressor object
+    # create linear classifier object
     
-    my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate) # for high-dimensional linear models
-    #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, 
-    #                                      l1_regularization_strength=0.0) # for L1 regularisation change the regularisation strength
+    if optimiser == "GradientDescent":
+        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
+    elif optimiser == "Ftrl":
+        my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate) # for high-dimensional linear models
+        #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, l1_regularization_strength=0.0) # for L1 regularisation change the regularisation strength
+    else:
+        print("Unknown optimiser type")
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     linear_classifier = tf.estimator.LinearClassifier(
-            feature_columns=construct_feature_columns(training_features),
-            optimizer=my_optimiser)
+            feature_columns = construct_feature_columns(training_features),
+            optimizer = my_optimiser)
     
     # define input functions
     
     training_input_fn = lambda: my_input_fn(
       training_features, 
-      training_targets["NPV_is_high"], 
-      batch_size=batch_size)
+      training_targets, 
+      batch_size = batch_size)
     predict_training_input_fn = lambda: my_input_fn(
       training_features, 
-      training_targets["NPV_is_high"], 
-      num_epochs=1, 
-      shuffle=False)
+      training_targets, 
+      num_epochs = 1, 
+      shuffle = False)
     predict_validation_input_fn = lambda: my_input_fn(
       validation_features, 
-      validation_targets["NPV_is_high"], 
-      num_epochs=1, 
-      shuffle=False)
+      validation_targets, 
+      num_epochs = 1, 
+      shuffle = False)
     
     # print training progress
     
@@ -96,17 +101,17 @@ def train_linear_classification_model(
         # train the model
                
         linear_classifier.train(
-                input_fn=training_input_fn,
-                steps=steps_per_period
+                input_fn = training_input_fn,
+                steps = steps_per_period
                 )
                 
         # compute predictions
         
-        training_probabilities = linear_classifier.predict(input_fn=predict_training_input_fn)
-        training_probabilities = np.array([item['probabilities'][0] for item in training_probabilities])
+        training_probabilities = linear_classifier.predict(input_fn = predict_training_input_fn)
+        training_probabilities = np.array([item["probabilities"][0] for item in training_probabilities])
         
-        validation_probabilities = linear_classifier.predict(input_fn=predict_validation_input_fn)
-        validation_probabilities = np.array([item['probabilities'][0] for item in validation_probabilities])
+        validation_probabilities = linear_classifier.predict(input_fn = predict_validation_input_fn)
+        validation_probabilities = np.array([item["probabilities"][0] for item in validation_probabilities])
         
         # calculate losses
         
@@ -126,16 +131,50 @@ def train_linear_classification_model(
     
     # plot loss metrics over periods
     
-    plt.ylabel('LogLoss')
-    plt.xlabel('Periods')
+    plt.figure(figsize = (13, 4))
+    
+    plt.subplot(1, 2, 1)
+    plt.ylabel("LogLoss")
+    plt.xlabel("Periods")
     plt.title("LogLoss vs. Periods")
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_log_losses, label="Training")
-    plt.plot(validation_log_losses, label="Validation")
+    plt.plot(training_log_losses, label = "Training")
+    plt.plot(validation_log_losses, label = "Validation")
     plt.legend()
+    
+    # calculate and plot ROC curves
+    
+    training_false_positive_rate, training_true_positive_rate, training_thresholds = metrics.roc_curve(
+            training_targets, training_probabilities)
+
+    validation_false_positive_rate, validation_true_positive_rate, validation_thresholds = metrics.roc_curve(
+            validation_targets, validation_probabilities)
+    
+    plt.subplot(1, 2, 2)
+    plt.ylabel("True positive rate")
+    plt.xlabel("False positive rate")
+    plt.title("ROC")
+    plt.tight_layout()
+    plt.grid()
+    plt.plot(training_false_positive_rate, training_true_positive_rate, label = "Training")
+    plt.plot(validation_false_positive_rate, validation_true_positive_rate, label = "Validation")
+    plt.plot([0, 1], [0, 1], color = "k")
+    plt.legend()
+    
+    # display final errors
     
     print("Final LogLoss (on training data):   %0.2f" % training_log_loss)
     print("Final LogLoss (on validation data): %0.2f" % validation_log_loss)
+    
+    # calculate and print evaluation metrics
+    
+    training_evaluation_metrics = linear_classifier.evaluate(input_fn = predict_training_input_fn)
+    validation_evaluation_metrics = linear_classifier.evaluate(input_fn = predict_validation_input_fn)
+
+    print("AUC (on training data): %0.2f" % training_evaluation_metrics["auc"])
+    print("Accuracy (on training data): %0.2f" % training_evaluation_metrics["accuracy"])
+    print("AUC (on validation data): %0.2f" % validation_evaluation_metrics["auc"])
+    print("Accuracy (on validation data): %0.2f" % validation_evaluation_metrics["accuracy"])
     
     return linear_classifier
