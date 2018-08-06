@@ -134,8 +134,8 @@ def train_linear_classification_model(
     plt.figure(figsize = (13, 4))
     
     plt.subplot(1, 2, 1)
-    plt.ylabel("LogLoss")
     plt.xlabel("Periods")
+    plt.ylabel("LogLoss")
     plt.title("LogLoss vs. Periods")
     plt.tight_layout()
     plt.grid()
@@ -152,8 +152,8 @@ def train_linear_classification_model(
             validation_targets, validation_probabilities)
     
     plt.subplot(1, 2, 2)
-    plt.ylabel("True positive rate")
     plt.xlabel("False positive rate")
+    plt.ylabel("True positive rate")
     plt.title("ROC")
     plt.tight_layout()
     plt.grid()

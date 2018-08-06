@@ -61,38 +61,38 @@ def train_neural_network_regression_model(
     periods = 10
     steps_per_period = steps / periods
     
-    # create linear regressor object
+    # create neural network regressor object
     
     if optimiser == "GradientDescent":
-        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     elif optimiser == "Adagrad":
-        my_optimiser = tf.train.AdagradOptimizer(learning_rate=learning_rate) # for convex problems
+        my_optimiser = tf.train.AdagradOptimizer(learning_rate = learning_rate) # for convex problems
     elif optimiser == "Adam":
-        my_optimiser = tf.train.AdamOptimizer(learning_rate=learning_rate) # for non-convex problems
+        my_optimiser = tf.train.AdamOptimizer(learning_rate = learning_rate) # for non-convex problems
     else:
         print("Unknown optimiser type")
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_regressor = tf.estimator.DNNRegressor(
-            feature_columns=construct_feature_columns(training_features),
-            hidden_units=hidden_units,
-            optimizer=my_optimiser)
+            feature_columns = construct_feature_columns(training_features),
+            hidden_units = hidden_units,
+            optimizer = my_optimiser)
     
     # define input functions
     
     training_input_fn = lambda: my_input_fn(
       training_features, 
       training_targets, 
-      batch_size=batch_size)
+      batch_size = batch_size)
     predict_training_input_fn = lambda: my_input_fn(
       training_features, 
       training_targets, 
-      num_epochs=1, 
-      shuffle=False)
+      num_epochs = 1, 
+      shuffle = False)
     predict_validation_input_fn = lambda: my_input_fn(
       validation_features, 
       validation_targets, 
-      num_epochs=1, 
-      shuffle=False)
+      num_epochs = 1, 
+      shuffle = False)
     
     # print training progress
     
@@ -107,17 +107,17 @@ def train_neural_network_regression_model(
         # train the model
                
         dnn_regressor.train(
-                input_fn=training_input_fn,
-                steps=steps_per_period
+                input_fn = training_input_fn,
+                steps = steps_per_period
                 )
                 
         # compute predictions
         
-        training_predictions = dnn_regressor.predict(input_fn=predict_training_input_fn)
-        training_predictions = np.array([item['predictions'][0] for item in training_predictions])
+        training_predictions = dnn_regressor.predict(input_fn = predict_training_input_fn)
+        training_predictions = np.array([item["predictions"][0] for item in training_predictions])
         
-        validation_predictions = dnn_regressor.predict(input_fn=predict_validation_input_fn)
-        validation_predictions = np.array([item['predictions'][0] for item in validation_predictions])
+        validation_predictions = dnn_regressor.predict(input_fn = predict_validation_input_fn)
+        validation_predictions = np.array([item["predictions"][0] for item in validation_predictions])
         
         # calculate losses
         
@@ -139,16 +139,16 @@ def train_neural_network_regression_model(
     
     # plot loss metrics over periods
     
-    plt.figure(figsize=(13, 4))
+    plt.figure(figsize = (13, 4))
     
     plt.subplot(1, 2, 1)
-    plt.ylabel("RMSE")
     plt.xlabel("Periods")
+    plt.ylabel("RMSE")
     plt.title("Root Mean Squared Error vs. Periods")
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_rmse, label="Training")
-    plt.plot(validation_rmse, label="Validation")
+    plt.plot(training_rmse, label = "Training")
+    plt.plot(validation_rmse, label = "Validation")
     plt.legend()
     
     # plot predictions scatter plot
@@ -159,9 +159,9 @@ def train_neural_network_regression_model(
     plt.title("Prediction accuracy")
     plt.tight_layout()
     plt.grid()
-    plt.scatter(training_targets, training_predictions, label="Training")
-    plt.scatter(validation_targets, validation_predictions, label="Validation")
-    plt.plot([0, 100], [0, 100], color="k")
+    plt.scatter(training_targets, training_predictions, label = "Training")
+    plt.scatter(validation_targets, validation_predictions, label = "Validation")
+    plt.plot([0, 100], [0, 100], color = "k")
     plt.legend()
     
     # display final errors

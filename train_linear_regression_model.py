@@ -62,32 +62,32 @@ def train_linear_regression_model(
     # create linear regressor object
     
     if optimiser == "GradientDescent":
-        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     elif optimiser == "Ftrl":
-        my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate) # for high-dimensional linear models
+        my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate) # for high-dimensional linear models
     else:
         print("Unknown optimiser type")
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     linear_regressor = tf.estimator.LinearRegressor(
-            feature_columns=construct_feature_columns(training_features),
-            optimizer=my_optimiser)
+            feature_columns = construct_feature_columns(training_features),
+            optimizer = my_optimiser)
     
     # define input functions
     
     training_input_fn = lambda: my_input_fn(
       training_features, 
       training_targets, 
-      batch_size=batch_size)
+      batch_size = batch_size)
     predict_training_input_fn = lambda: my_input_fn(
       training_features, 
       training_targets, 
-      num_epochs=1, 
-      shuffle=False)
+      num_epochs = 1, 
+      shuffle = False)
     predict_validation_input_fn = lambda: my_input_fn(
       validation_features, 
       validation_targets, 
-      num_epochs=1, 
-      shuffle=False)
+      num_epochs = 1, 
+      shuffle = False)
     
     # print training progress
     
@@ -102,17 +102,17 @@ def train_linear_regression_model(
         # train the model
                
         linear_regressor.train(
-                input_fn=training_input_fn,
-                steps=steps_per_period
+                input_fn = training_input_fn,
+                steps = steps_per_period
                 )
                 
         # compute predictions
         
-        training_predictions = linear_regressor.predict(input_fn=predict_training_input_fn)
-        training_predictions = np.array([item['predictions'][0] for item in training_predictions])
+        training_predictions = linear_regressor.predict(input_fn = predict_training_input_fn)
+        training_predictions = np.array([item["predictions"][0] for item in training_predictions])
         
-        validation_predictions = linear_regressor.predict(input_fn=predict_validation_input_fn)
-        validation_predictions = np.array([item['predictions'][0] for item in validation_predictions])
+        validation_predictions = linear_regressor.predict(input_fn = predict_validation_input_fn)
+        validation_predictions = np.array([item["predictions"][0] for item in validation_predictions])
         
         # calculate losses
         
@@ -134,29 +134,29 @@ def train_linear_regression_model(
     
     # plot loss metrics over periods
     
-    plt.figure(figsize=(13, 4))
+    plt.figure(figsize = (13, 4))
     
     plt.subplot(1, 2, 1)
-    plt.ylabel("RMSE")
     plt.xlabel("Periods")
+    plt.ylabel("RMSE")
     plt.title("Root Mean Squared Error vs. Periods")
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_rmse, label="Training")
-    plt.plot(validation_rmse, label="Validation")
+    plt.plot(training_rmse, label = "Training")
+    plt.plot(validation_rmse, label = "Validation")
     plt.legend()
     
     # plot predictions scatter plot
     
     plt.subplot(1, 2, 2)
-    plt.xlabel("Validation targets")
-    plt.ylabel("Validation predictions")
+    plt.xlabel("Targets")
+    plt.ylabel("Predictions")
     plt.title("Prediction accuracy")
     plt.tight_layout()
     plt.grid()
-    plt.scatter(training_targets, training_predictions, label="Training")
-    plt.scatter(validation_targets, validation_predictions, label="Validation")
-    plt.plot([0, 100], [0, 100], color="k")
+    plt.scatter(training_targets, training_predictions, label = "Training")
+    plt.scatter(validation_targets, validation_predictions, label = "Validation")
+    plt.plot([0, 100], [0, 100], color = "k")
     plt.legend()
     
     # display final errors
