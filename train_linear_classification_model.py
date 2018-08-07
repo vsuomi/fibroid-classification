@@ -63,7 +63,8 @@ def train_linear_classification_model(
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     elif optimiser == "Ftrl":
         my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate) # for high-dimensional linear models
-        #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, l1_regularization_strength=0.0) # for L1 regularisation change the regularisation strength
+        #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, l1_regularization_strength=0.0) # for L1 regularisation
+        #my_optimiser = tf.train.FtrlOptimizer(learning_rate=learning_rate, l2_regularization_strength=0.0) # for L2 regularisation
     else:
         print("Unknown optimiser type")
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
@@ -108,10 +109,10 @@ def train_linear_classification_model(
         # compute predictions
         
         training_probabilities = linear_classifier.predict(input_fn = predict_training_input_fn)
-        training_probabilities = np.array([item["probabilities"][0] for item in training_probabilities])
+        training_probabilities = np.array([item["probabilities"] for item in training_probabilities])
         
         validation_probabilities = linear_classifier.predict(input_fn = predict_validation_input_fn)
-        validation_probabilities = np.array([item["probabilities"][0] for item in validation_probabilities])
+        validation_probabilities = np.array([item["probabilities"] for item in validation_probabilities])
         
         # calculate losses
         
@@ -142,6 +143,11 @@ def train_linear_classification_model(
     plt.plot(training_log_losses, label = "Training")
     plt.plot(validation_log_losses, label = "Validation")
     plt.legend()
+    
+    # get just the probabilities for the positive class
+    
+    training_probabilities = training_probabilities[:, 1]
+    validation_probabilities = validation_probabilities[:, 1]
     
     # calculate and plot ROC curves
     
