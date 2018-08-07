@@ -187,4 +187,4 @@ def train_neural_network_classification_model(
     print("AUC (on validation data): %0.2f" % validation_evaluation_metrics["auc"])
     print("Accuracy (on validation data): %0.2f" % validation_evaluation_metrics["accuracy"])
     
-    return dnn_classifier
+    return dnn_classifier, training_probabilities, validation_probabilities

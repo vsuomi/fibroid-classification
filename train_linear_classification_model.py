@@ -183,4 +183,4 @@ def train_linear_classification_model(
     print("AUC (on validation data): %0.2f" % validation_evaluation_metrics["auc"])
     print("Accuracy (on validation data): %0.2f" % validation_evaluation_metrics["accuracy"])
     
-    return linear_classifier
+    return linear_classifier, training_probabilities, validation_probabilities

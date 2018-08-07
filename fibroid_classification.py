@@ -92,10 +92,10 @@ scaled_validation_features = scale_features(validation_features, "z-score")
 
 #%% train using linear classification model function
 
-linear_classifier = train_linear_classification_model(
-    learning_rate = 0.000001,
-    steps = 1000,
-    batch_size = 46,
+linear_classifier, training_probabilities, validation_probabilities = train_linear_classification_model(
+    learning_rate = 0.001,
+    steps = 1200,
+    batch_size = 10,
     optimiser = "Ftrl",
     training_features = scaled_training_features,
     training_targets = training_targets,
@@ -104,12 +104,12 @@ linear_classifier = train_linear_classification_model(
 
 #%% train using neural network classification model function
 
-dnn_classifier = train_neural_network_classification_model(
-    learning_rate = 0.0001,
-    steps = 2000,
+dnn_classifier, training_probabilities, validation_probabilities = train_neural_network_classification_model(
+    learning_rate = 0.001,
+    steps = 1200,
     batch_size = 10,
     hidden_units = [10, 10],
-    optimiser = "Adagrad",
+    optimiser = "Adam",
     training_features = scaled_training_features,
     training_targets = training_targets,
     validation_features = scaled_validation_features,
