@@ -135,7 +135,7 @@ def train_linear_regression_model(
     
     # plot loss metrics over periods
     
-    plt.figure(figsize = (13, 4))
+    plt.figure(figsize = (12, 4))
     
     plt.subplot(1, 2, 1)
     plt.xlabel("Periods")
