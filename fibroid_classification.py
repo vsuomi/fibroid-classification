@@ -11,7 +11,7 @@ Created on Fri May 25 09:31:49 2018
 @description:
     
     This code is used to classify the treatability of uterine fibroids before
-    HIFU therapy based on their pre-treatment MR parameters
+    HIFU therapy based on their pre-treatment parameters
     
 """
 
@@ -45,7 +45,8 @@ fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\
 
 #%% add new feature for logistic regression
 
-fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV_percent"] > 75).astype(float) # NPV above 75%
+NPV_threshold = 75
+fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV_percent"] > NPV_threshold).astype(float)
 
 #%% format data
 
@@ -62,7 +63,8 @@ display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
-num_training = round(0.7*len(fibroid_dataframe))
+split_ratio = 0.7
+num_training = round(split_ratio*len(fibroid_dataframe))
 num_validation = len(fibroid_dataframe) - num_training
 
 training_set = fibroid_dataframe.head(num_training)

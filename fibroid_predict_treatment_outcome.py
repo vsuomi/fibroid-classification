@@ -11,7 +11,7 @@ Created on Thu May 31 09:09:30 2018
 @description:
     
     This code is used to predict the HIFU therapy outcome (non-perfused volume)
-    for uterine fibroids based on their pre-treatment MR parameters
+    for uterine fibroids based on their pre-treatment parameters
     
 """
 
@@ -58,7 +58,8 @@ display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
-num_training = round(0.7*len(fibroid_dataframe))
+split_ratio = 0.7
+num_training = round(split_ratio*len(fibroid_dataframe))
 num_validation = len(fibroid_dataframe) - num_training
 
 training_set = fibroid_dataframe.head(num_training)
