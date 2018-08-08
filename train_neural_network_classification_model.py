@@ -45,7 +45,7 @@ def train_neural_network_classification_model(
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
         hidden_units: number of neurons in each layrs (list)
-        optimiser: type of the optimiser (GradientDescent, Adagrad, Adam)
+        optimiser: type of the optimiser (GradientDescent, ProximalGradientDescent, Adagrad, ProximalAdagrad, Adam)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
         calidation_features: one or more columns of validation features (DataFrame)
