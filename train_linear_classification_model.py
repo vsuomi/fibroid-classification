@@ -23,6 +23,7 @@ from sklearn import metrics
 import tensorflow as tf
 from my_input_fn import my_input_fn
 from construct_feature_columns import construct_feature_columns
+import pandas as pd
 
 #%% define function
 
@@ -179,8 +180,13 @@ def train_linear_classification_model(
     validation_evaluation_metrics = linear_classifier.evaluate(input_fn = predict_validation_input_fn)
 
     print("AUC (on training data): %0.2f" % training_evaluation_metrics["auc"])
-    print("Accuracy (on training data): %0.2f" % training_evaluation_metrics["accuracy"])
     print("AUC (on validation data): %0.2f" % validation_evaluation_metrics["auc"])
-    print("Accuracy (on validation data): %0.2f" % validation_evaluation_metrics["accuracy"])
+    
+    # convert outputs to pandas DataFrame
+    
+    training_probabilities = pd.DataFrame(training_probabilities, columns = ["Probability"], 
+                                          index = training_targets.index, dtype = float)
+    validation_probabilities = pd.DataFrame(validation_probabilities, columns = ["Probability"], 
+                                            index = validation_targets.index, dtype = float)
     
     return linear_classifier, training_probabilities, validation_probabilities
