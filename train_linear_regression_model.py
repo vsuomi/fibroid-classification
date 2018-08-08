@@ -25,6 +25,7 @@ from sklearn import metrics
 import tensorflow as tf
 from my_input_fn import my_input_fn
 from construct_feature_columns import construct_feature_columns
+import pandas as pd
 
 #%% define function
 
@@ -164,4 +165,11 @@ def train_linear_regression_model(
     print("Final RMSE (on training data):   %0.2f" % training_root_mean_squared_error)
     print("Final RMSE (on validation data): %0.2f" % validation_root_mean_squared_error)
     
-    return linear_regressor
+    # convert outputs to pandas DataFrame
+    
+    training_predictions = pd.DataFrame(training_predictions, columns = ["Prediction"], 
+                                          index = training_targets.index, dtype = float)
+    validation_predictions = pd.DataFrame(validation_predictions, columns = ["Prediction"], 
+                                            index = validation_targets.index, dtype = float)
+    
+    return linear_regressor, training_predictions, validation_predictions

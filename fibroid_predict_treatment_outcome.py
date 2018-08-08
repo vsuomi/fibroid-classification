@@ -88,7 +88,7 @@ scaled_validation_features = scale_features(validation_features, "z-score")
 
 #%% train using neural network regression model
 
-dnn_regressor = train_neural_network_regression_model(
+dnn_regressor, training_predictions, validation_predictions = train_neural_network_regression_model(
     learning_rate = 0.001,
     steps = 2000,
     batch_size = 10,
