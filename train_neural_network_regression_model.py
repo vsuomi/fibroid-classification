@@ -47,7 +47,7 @@ def train_neural_network_regression_model(
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
         hidden_units: number of neurons in each layrs (list)
-        optimiser: type of the optimiser (GradientDescent, Adagrad, Adam)
+        optimiser: type of the optimiser (GradientDescent, ProximalGradientDescent, Adagrad, ProximalAdagrad, Adam)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
         calidation_features: one or more columns of validation features (DataFrame)
@@ -66,8 +66,16 @@ def train_neural_network_regression_model(
     
     if optimiser == "GradientDescent":
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
+    elif optimiser == "ProximalGradientDescent":
+        my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate)
+        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.0) # for L1 regularisation
+        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.0) # for L2 regularisation
     elif optimiser == "Adagrad":
         my_optimiser = tf.train.AdagradOptimizer(learning_rate = learning_rate) # for convex problems
+    elif optimiser == "ProximalAdagrad":
+        my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate) # for convex problems
+        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.0) # for L1 regularisation
+        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.0) # for L2 regularisation
     elif optimiser == "Adam":
         my_optimiser = tf.train.AdamOptimizer(learning_rate = learning_rate) # for non-convex problems
     else:
