@@ -15,6 +15,11 @@ Created on Fri May 25 09:31:49 2018
     
 """
 
+#%% clear variables
+
+%reset -f
+%clear
+
 #%% import necessary libraries
 
 #import math
@@ -50,7 +55,7 @@ fibroid_dataframe["NPV_is_high"] = (fibroid_dataframe["NPV_percent"] > NPV_thres
 
 #%% format data
 
-# randomise and scale the data
+# randomise the data
 
 fibroid_dataframe = fibroid_dataframe.reindex(np.random.permutation(fibroid_dataframe.index))
 
@@ -77,13 +82,17 @@ display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[["Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+training_features = training_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
+                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
+                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
                                   "Fibroid_volume"]]
 training_targets = training_set[["NPV_is_high"]]
 
-validation_features = validation_set[["Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+validation_features = validation_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
+                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
+                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
                                   "Fibroid_volume"]]
 validation_targets = validation_set[["NPV_is_high"]]
 

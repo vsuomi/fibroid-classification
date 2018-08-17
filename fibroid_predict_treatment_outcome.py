@@ -15,6 +15,11 @@ Created on Thu May 31 09:09:30 2018
     
 """
 
+#%% clear variables
+
+%reset -f
+%clear
+
 #%% import necessary libraries
 
 #import math
@@ -45,7 +50,7 @@ fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\
 
 #%% format data
 
-# randomise and scale the data
+# randomise the data
 
 fibroid_dataframe = fibroid_dataframe.reindex(np.random.permutation(fibroid_dataframe.index))
 
@@ -72,13 +77,17 @@ display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[["Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+training_features = training_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
+                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
+                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
                                   "Fibroid_volume"]]
 training_targets = training_set[["NPV_percent"]]
 
-validation_features = validation_set[["Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance",
+validation_features = validation_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
+                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
+                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
+                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
                                   "Fibroid_volume"]]
 validation_targets = validation_set[["NPV_percent"]]
 
