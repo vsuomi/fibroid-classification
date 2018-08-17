@@ -48,6 +48,10 @@ pd.options.display.float_format = '{:.1f}'.format
 
 fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv", sep=",")
 
+#%% plot NPV histogram
+
+fibroid_dataframe["NPV_percent"].hist(bins = 20)
+
 #%% add new feature for logistic regression
 
 NPV_threshold = 75
