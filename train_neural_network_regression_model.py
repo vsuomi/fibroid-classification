@@ -68,14 +68,14 @@ def train_neural_network_regression_model(
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     elif optimiser == "ProximalGradientDescent":
         my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate)
-        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.0) # for L1 regularisation
-        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.0) # for L2 regularisation
+        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
+        #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
     elif optimiser == "Adagrad":
         my_optimiser = tf.train.AdagradOptimizer(learning_rate = learning_rate) # for convex problems
     elif optimiser == "ProximalAdagrad":
         my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate) # for convex problems
-        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.0) # for L1 regularisation
-        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.0) # for L2 regularisation
+        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
+        #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
     elif optimiser == "Adam":
         my_optimiser = tf.train.AdamOptimizer(learning_rate = learning_rate) # for non-convex problems
     else:
@@ -84,7 +84,9 @@ def train_neural_network_regression_model(
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns = construct_feature_columns(training_features),
             hidden_units = hidden_units,
-            optimizer = my_optimiser)
+            optimizer = my_optimiser,
+            activation_fn = tf.nn.relu,
+            batch_norm = False)
     
     # define input functions
     
