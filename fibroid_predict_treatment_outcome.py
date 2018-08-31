@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Thu May 31 09:09:30 2018
 
 @author:
@@ -13,7 +13,7 @@ Created on Thu May 31 09:09:30 2018
     This code is used to predict the HIFU therapy outcome (non-perfused volume)
     for uterine fibroids based on their pre-treatment parameters
     
-"""
+'''
 
 #%% clear variables
 
@@ -46,7 +46,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r"C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv", sep=",")
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep=',')
 
 #%% format data
 
@@ -56,9 +56,9 @@ fibroid_dataframe = fibroid_dataframe.reindex(np.random.permutation(fibroid_data
 
 # examine data
 
-print("\nFirst five entries of the data:\n")
+print('\nFirst five entries of the data:\n')
 display.display(fibroid_dataframe.head())
-print("\nSummary of the data:\n")
+print('\nSummary of the data:\n')
 display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
@@ -72,38 +72,46 @@ validation_set = fibroid_dataframe.tail(num_validation)
 
 #%% display correlation matrix to help select suitable features
 
-print("\nCorrelation matrix:\n")
+print('\nCorrelation matrix:\n')
 display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
-                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
-                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
-                                  "Fibroid_volume"]]
-training_targets = training_set[["NPV_percent"]]
+training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
+                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+                                  'Fibroid_volume']]
+training_targets = training_set[['NPV_percent']]
 
-validation_features = validation_set[["white", "black", "asian", "Age", "Weight", "Subcutaneous_fat_thickness",
-                                  "Front-back_distance", "Fibroid_size", "Fibroid_distance", "intramural",
-                                  "subserosal", "submucosal", "anterior", "posterior", "lateral", "fundus",
-                                  "anteverted", "retroverted", "Type_I", "Type_II", "Type_III",
-                                  "Fibroid_volume"]]
-validation_targets = validation_set[["NPV_percent"]]
+validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
+                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+                                  'Fibroid_volume']]
+validation_targets = validation_set[['NPV_percent']]
 
 #%% scale features
 
-scaled_training_features = scale_features(training_features, "z-score")
-scaled_validation_features = scale_features(validation_features, "z-score")
+scaled_training_features = scale_features(training_features, 'z-score')
+scaled_validation_features = scale_features(validation_features, 'z-score')
 
 #%% train using neural network regression model
 
 dnn_regressor, training_predictions, validation_predictions = train_neural_network_regression_model(
     learning_rate = 0.001,
     steps = 2000,
-    batch_size = 10,
+    batch_size = 5,
     hidden_units = [10, 10],
-    optimiser = "Adam",
+    optimiser = 'Adam',
     training_features = scaled_training_features,
     training_targets = training_targets,
     validation_features = scaled_validation_features,

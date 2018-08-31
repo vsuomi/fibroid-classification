@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Fri Jun  1 10:56:05 2018
 
 @author:
@@ -13,7 +13,7 @@ Created on Fri Jun  1 10:56:05 2018
     This code defines a neural network regression model which is called 
     to train on selected features
     
-"""
+'''
 
 #%% import necessary packages
 
@@ -41,7 +41,7 @@ def train_neural_network_regression_model(
         validation_targets
         ):
     
-    """
+    '''
     Args:
         learning rate: the learning rate (float)
         steps: total number of training steps (int)
@@ -55,7 +55,7 @@ def train_neural_network_regression_model(
         
     Returns:
         A `DNNRegressor` object trained on the training data
-    """
+    '''
     
     # define periods
     
@@ -64,29 +64,29 @@ def train_neural_network_regression_model(
     
     # create neural network regressor object
     
-    if optimiser == "GradientDescent":
+    if optimiser == 'GradientDescent':
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
-    elif optimiser == "ProximalGradientDescent":
+    elif optimiser == 'ProximalGradientDescent':
         my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate)
         #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
         #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
-    elif optimiser == "Adagrad":
+    elif optimiser == 'Adagrad':
         my_optimiser = tf.train.AdagradOptimizer(learning_rate = learning_rate) # for convex problems
-    elif optimiser == "ProximalAdagrad":
+    elif optimiser == 'ProximalAdagrad':
         my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate) # for convex problems
         #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
         #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
-    elif optimiser == "Adam":
+    elif optimiser == 'Adam':
         my_optimiser = tf.train.AdamOptimizer(learning_rate = learning_rate) # for non-convex problems
     else:
-        print("Unknown optimiser type")
+        print('Unknown optimiser type')
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns = construct_feature_columns(training_features),
             hidden_units = hidden_units,
             optimizer = my_optimiser,
             activation_fn = tf.nn.relu,
-            batch_norm = False)
+            batch_norm = True)
     
     # define input functions
     
@@ -107,8 +107,8 @@ def train_neural_network_regression_model(
     
     # print training progress
     
-    print("Model training started")
-    print("RMSE on training data:")
+    print('Model training started')
+    print('RMSE on training data:')
     
     training_rmse = []
     validation_rmse = []
@@ -125,10 +125,10 @@ def train_neural_network_regression_model(
         # compute predictions
         
         training_predictions = dnn_regressor.predict(input_fn = predict_training_input_fn)
-        training_predictions = np.array([item["predictions"][0] for item in training_predictions])
+        training_predictions = np.array([item['predictions'][0] for item in training_predictions])
         
         validation_predictions = dnn_regressor.predict(input_fn = predict_validation_input_fn)
-        validation_predictions = np.array([item["predictions"][0] for item in validation_predictions])
+        validation_predictions = np.array([item['predictions'][0] for item in validation_predictions])
         
         # calculate losses
         
@@ -139,52 +139,52 @@ def train_neural_network_regression_model(
         
         # print the current loss
         
-        print("Period %02d: %0.2f" % (period, training_root_mean_squared_error))
+        print('Period %02d: %0.2f' % (period, training_root_mean_squared_error))
         
         # add loss metrics to the list
         
         training_rmse.append(training_root_mean_squared_error)
         validation_rmse.append(validation_root_mean_squared_error)
         
-    print("Model training finished")
+    print('Model training finished')
     
     # plot loss metrics over periods
     
     plt.figure(figsize = (12, 4))
     
     plt.subplot(1, 2, 1)
-    plt.xlabel("Periods")
-    plt.ylabel("RMSE")
-    plt.title("Root Mean Squared Error vs. Periods")
+    plt.xlabel('Periods')
+    plt.ylabel('RMSE')
+    plt.title('Root Mean Squared Error vs. Periods')
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_rmse, label = "Training")
-    plt.plot(validation_rmse, label = "Validation")
+    plt.plot(training_rmse, label = 'Training')
+    plt.plot(validation_rmse, label = 'Validation')
     plt.legend()
     
     # plot predictions scatter plot
     
     plt.subplot(1, 2, 2)
-    plt.xlabel("Targets")
-    plt.ylabel("Predictions")
-    plt.title("Prediction accuracy")
+    plt.xlabel('Targets')
+    plt.ylabel('Predictions')
+    plt.title('Prediction accuracy')
     plt.tight_layout()
     plt.grid()
-    plt.scatter(training_targets, training_predictions, label = "Training")
-    plt.scatter(validation_targets, validation_predictions, label = "Validation")
-    plt.plot([0, 100], [0, 100], color = "k")
+    plt.scatter(training_targets, training_predictions, label = 'Training')
+    plt.scatter(validation_targets, validation_predictions, label = 'Validation')
+    plt.plot([0, 100], [0, 100], color = 'k')
     plt.legend()
     
     # display final errors
     
-    print("Final RMSE (on training data):   %0.2f" % training_root_mean_squared_error)
-    print("Final RMSE (on validation data): %0.2f" % validation_root_mean_squared_error)
+    print('Final RMSE (on training data):   %0.2f' % training_root_mean_squared_error)
+    print('Final RMSE (on validation data): %0.2f' % validation_root_mean_squared_error)
     
     # convert outputs to pandas DataFrame
     
-    training_predictions = pd.DataFrame(training_predictions, columns = ["Prediction"], 
+    training_predictions = pd.DataFrame(training_predictions, columns = ['Prediction'], 
                                           index = training_targets.index, dtype = float)
-    validation_predictions = pd.DataFrame(validation_predictions, columns = ["Prediction"], 
+    validation_predictions = pd.DataFrame(validation_predictions, columns = ['Prediction'], 
                                             index = validation_targets.index, dtype = float)
     
     return dnn_regressor, training_predictions, validation_predictions

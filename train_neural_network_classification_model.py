@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Mon Aug  6 09:31:40 2018
 
 @author:
@@ -13,7 +13,7 @@ Created on Mon Aug  6 09:31:40 2018
     This code defines a neural network classification model which is called to 
     train on selected features
     
-"""
+'''
 
 #%% import necessary packages
 
@@ -39,7 +39,7 @@ def train_neural_network_classification_model(
         validation_targets
         ):
     
-    """
+    '''
     Args:
         learning rate: the learning rate (float)
         steps: total number of training steps (int)
@@ -53,7 +53,7 @@ def train_neural_network_classification_model(
         
     Returns:
         A `DNNClassifier` object trained on the training data
-    """
+    '''
     
     # define periods
     
@@ -62,22 +62,22 @@ def train_neural_network_classification_model(
     
     # create neural network classifier object
     
-    if optimiser == "GradientDescent":
+    if optimiser == 'GradientDescent':
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
-    elif optimiser == "ProximalGradientDescent":
+    elif optimiser == 'ProximalGradientDescent':
         my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate)
         #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
         #my_optimiser = tf.train.ProximalGradientDescentOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
-    elif optimiser == "Adagrad":
+    elif optimiser == 'Adagrad':
         my_optimiser = tf.train.AdagradOptimizer(learning_rate = learning_rate) # for convex problems
-    elif optimiser == "ProximalAdagrad":
+    elif optimiser == 'ProximalAdagrad':
         my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate) # for convex problems
         #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
         #my_optimiser = tf.train.ProximalAdagradOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
-    elif optimiser == "Adam":
+    elif optimiser == 'Adam':
         my_optimiser = tf.train.AdamOptimizer(learning_rate = learning_rate) # for non-convex problems
     else:
-        print("Unknown optimiser type")
+        print('Unknown optimiser type')
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_classifier = tf.estimator.DNNClassifier(
             feature_columns = construct_feature_columns(training_features),
@@ -85,7 +85,7 @@ def train_neural_network_classification_model(
             hidden_units = hidden_units,
             optimizer = my_optimiser,
             activation_fn = tf.nn.relu,
-            batch_norm = False)
+            batch_norm = True)
     
     # define input functions
     
@@ -106,8 +106,8 @@ def train_neural_network_classification_model(
     
     # print training progress
     
-    print("Model training started")
-    print("LogLoss on training data:")
+    print('Model training started')
+    print('LogLoss on training data:')
     
     training_log_losses = []
     validation_log_losses = []
@@ -124,10 +124,10 @@ def train_neural_network_classification_model(
         # compute predictions
         
         training_probabilities = dnn_classifier.predict(input_fn = predict_training_input_fn)
-        training_probabilities = np.array([item["probabilities"] for item in training_probabilities])
+        training_probabilities = np.array([item['probabilities'] for item in training_probabilities])
         
         validation_probabilities = dnn_classifier.predict(input_fn = predict_validation_input_fn)
-        validation_probabilities = np.array([item["probabilities"] for item in validation_probabilities])
+        validation_probabilities = np.array([item['probabilities'] for item in validation_probabilities])
         
         # calculate losses
         
@@ -136,27 +136,27 @@ def train_neural_network_classification_model(
         
         # print the current loss
         
-        print("Period %02d: %0.2f" % (period, training_log_loss))
+        print('Period %02d: %0.2f' % (period, training_log_loss))
         
         # add loss metrics to the list
         
         training_log_losses.append(training_log_loss)
         validation_log_losses.append(validation_log_loss)
         
-    print("Model training finished")
+    print('Model training finished')
     
     # plot loss metrics over periods
     
     plt.figure(figsize = (12, 4))
     
     plt.subplot(1, 2, 1)
-    plt.xlabel("Periods")
-    plt.ylabel("LogLoss")
-    plt.title("LogLoss vs. Periods")
+    plt.xlabel('Periods')
+    plt.ylabel('LogLoss')
+    plt.title('LogLoss vs. Periods')
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_log_losses, label = "Training")
-    plt.plot(validation_log_losses, label = "Validation")
+    plt.plot(training_log_losses, label = 'Training')
+    plt.plot(validation_log_losses, label = 'Validation')
     plt.legend()
     
     # get just the probabilities for the positive class
@@ -173,34 +173,34 @@ def train_neural_network_classification_model(
             validation_targets, validation_probabilities)
     
     plt.subplot(1, 2, 2)
-    plt.xlabel("False positive rate")
-    plt.ylabel("True positive rate")
-    plt.title("ROC")
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.title('ROC')
     plt.tight_layout()
     plt.grid()
-    plt.plot(training_false_positive_rate, training_true_positive_rate, label = "Training")
-    plt.plot(validation_false_positive_rate, validation_true_positive_rate, label = "Validation")
-    plt.plot([0, 1], [0, 1], color = "k")
+    plt.plot(training_false_positive_rate, training_true_positive_rate, label = 'Training')
+    plt.plot(validation_false_positive_rate, validation_true_positive_rate, label = 'Validation')
+    plt.plot([0, 1], [0, 1], color = 'k')
     plt.legend()
     
     # display final errors
     
-    print("Final LogLoss (on training data):   %0.2f" % training_log_loss)
-    print("Final LogLoss (on validation data): %0.2f" % validation_log_loss)
+    print('Final LogLoss (on training data):   %0.2f' % training_log_loss)
+    print('Final LogLoss (on validation data): %0.2f' % validation_log_loss)
     
     # calculate and print evaluation metrics
     
     training_evaluation_metrics = dnn_classifier.evaluate(input_fn = predict_training_input_fn)
     validation_evaluation_metrics = dnn_classifier.evaluate(input_fn = predict_validation_input_fn)
 
-    print("AUC (on training data): %0.2f" % training_evaluation_metrics["auc"])
-    print("AUC (on validation data): %0.2f" % validation_evaluation_metrics["auc"])
+    print('AUC (on training data): %0.2f' % training_evaluation_metrics['auc'])
+    print('AUC (on validation data): %0.2f' % validation_evaluation_metrics['auc'])
     
     # convert outputs to pandas DataFrame
     
-    training_probabilities = pd.DataFrame(training_probabilities, columns = ["Probability"], 
+    training_probabilities = pd.DataFrame(training_probabilities, columns = ['Probability'], 
                                           index = training_targets.index, dtype = float)
-    validation_probabilities = pd.DataFrame(validation_probabilities, columns = ["Probability"], 
+    validation_probabilities = pd.DataFrame(validation_probabilities, columns = ['Probability'], 
                                             index = validation_targets.index, dtype = float)
     
     return dnn_classifier, training_probabilities, validation_probabilities
