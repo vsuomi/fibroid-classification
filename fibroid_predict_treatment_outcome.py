@@ -108,9 +108,9 @@ scaled_validation_features = scale_features(validation_features, 'z-score')
 
 dnn_regressor, training_predictions, validation_predictions = train_neural_network_regression_model(
     learning_rate = 0.001,
-    steps = 2000,
+    steps = 2200,
     batch_size = 5,
-    hidden_units = [10, 10],
+    hidden_units = [20, 20],
     optimiser = 'Adam',
     training_features = scaled_training_features,
     training_targets = training_targets,
