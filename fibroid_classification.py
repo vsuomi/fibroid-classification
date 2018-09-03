@@ -34,7 +34,7 @@ import pandas as pd
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
 
-from train_linear_classification_model import train_linear_classification_model
+#from train_linear_classification_model import train_linear_classification_model
 from train_neural_network_classification_model import train_neural_network_classification_model
 from scale_features import scale_features
 
@@ -87,7 +87,7 @@ display.display(training_set.corr())
 #%% select features and targets
 
 training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+                                  'Live_births', 'esmya', 'open_myomectomy', 
                                   'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
                                   'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
                                   'bleeding', 'pain', 'mass', 'urinary', 'infertility',
@@ -98,7 +98,7 @@ training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'H
 training_targets = training_set[['NPV_is_high']]
 
 validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+                                  'Live_births', 'esmya', 'open_myomectomy', 
                                   'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
                                   'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
                                   'bleeding', 'pain', 'mass', 'urinary', 'infertility',
