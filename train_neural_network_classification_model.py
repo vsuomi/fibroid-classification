@@ -83,8 +83,10 @@ def train_neural_network_classification_model(
             feature_columns = construct_feature_columns(training_features),
             n_classes = 2,
             hidden_units = hidden_units,
+            weight_column = None,
             optimizer = my_optimiser,
             activation_fn = tf.nn.relu,
+            dropout = None,
             batch_norm = True)
     
     # define input functions

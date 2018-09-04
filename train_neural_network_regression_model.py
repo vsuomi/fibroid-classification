@@ -84,8 +84,10 @@ def train_neural_network_regression_model(
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns = construct_feature_columns(training_features),
             hidden_units = hidden_units,
+            weight_column = None,
             optimizer = my_optimiser,
             activation_fn = tf.nn.relu,
+            dropout = None,
             batch_norm = True)
     
     # define input functions
