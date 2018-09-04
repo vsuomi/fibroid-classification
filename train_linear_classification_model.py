@@ -64,8 +64,8 @@ def train_linear_classification_model(
         my_optimiser = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     elif optimiser == 'Ftrl':
         my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate) # for high-dimensional linear models
-        #my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.0) # for L1 regularisation
-        #my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.0) # for L2 regularisation
+        #my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate, l1_regularization_strength = 0.1) # for L1 regularisation
+        #my_optimiser = tf.train.FtrlOptimizer(learning_rate = learning_rate, l2_regularization_strength = 0.1) # for L2 regularisation
     else:
         print('Unknown optimiser type')
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
