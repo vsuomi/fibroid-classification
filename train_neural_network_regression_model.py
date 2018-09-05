@@ -34,6 +34,9 @@ def train_neural_network_regression_model(
         steps, 
         batch_size,
         hidden_units,
+        weight_column,
+        dropout,
+        batch_norm,
         optimiser,
         training_features,
         training_targets,
@@ -47,6 +50,9 @@ def train_neural_network_regression_model(
         steps: total number of training steps (int)
         batch_size: batch size to used to calculate the gradient (int)
         hidden_units: number of neurons in each layrs (list)
+        weight_column: down weight or boost examples during training for unbalanced sets
+        dropout: the probability to drop out a node output (for regularisation)
+        batch_norm: to use batch normalization after each hidden layer (True/False)
         optimiser: type of the optimiser (GradientDescent, ProximalGradientDescent, Adagrad, ProximalAdagrad, Adam)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
@@ -84,11 +90,11 @@ def train_neural_network_regression_model(
     dnn_regressor = tf.estimator.DNNRegressor(
             feature_columns = construct_feature_columns(training_features),
             hidden_units = hidden_units,
-            weight_column = None,
+            weight_column = weight_column,
             optimizer = my_optimiser,
             activation_fn = tf.nn.relu,
-            dropout = None,
-            batch_norm = True)
+            dropout = dropout,
+            batch_norm = batch_norm)
     
     # define input functions
     

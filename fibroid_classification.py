@@ -87,7 +87,7 @@ display.display(training_set.corr())
 #%% select features and targets
 
 training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-                                  'Live_births', 'esmya', 'open_myomectomy', 
+                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
                                   'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
                                   'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
                                   'bleeding', 'pain', 'mass', 'urinary', 'infertility',
@@ -98,7 +98,7 @@ training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'H
 training_targets = training_set[['NPV_is_high']]
 
 validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-                                  'Live_births', 'esmya', 'open_myomectomy', 
+                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
                                   'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
                                   'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
                                   'bleeding', 'pain', 'mass', 'urinary', 'infertility',
@@ -120,6 +120,9 @@ dnn_classifier, training_probabilities, validation_probabilities = train_neural_
     steps = 1200,
     batch_size = 5,
     hidden_units = [10, 10],
+    weight_column = None,
+    dropout = None,
+    batch_norm = True,
     optimiser = 'Adam',
     training_features = scaled_training_features,
     training_targets = training_targets,
