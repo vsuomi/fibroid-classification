@@ -36,6 +36,7 @@ def train_neural_network_classification_model(
         dropout,
         batch_norm,
         optimiser,
+        model_dir,
         training_features,
         training_targets,
         validation_features,
@@ -52,6 +53,7 @@ def train_neural_network_classification_model(
         dropout: the probability to drop out a node output (for regularisation)
         batch_norm: to use batch normalization after each hidden layer (True/False)
         optimiser: type of the optimiser (GradientDescent, ProximalGradientDescent, Adagrad, ProximalAdagrad, Adam)
+        model_dir: directory to save the checkpoint ('None' if no saving)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
         calidation_features: one or more columns of validation features (DataFrame)
@@ -87,6 +89,7 @@ def train_neural_network_classification_model(
     my_optimiser = tf.contrib.estimator.clip_gradients_by_norm(my_optimiser, 5.0)
     dnn_classifier = tf.estimator.DNNClassifier(
             feature_columns = construct_feature_columns(training_features),
+            model_dir = model_dir,
             n_classes = 2,
             hidden_units = hidden_units,
             weight_column = weight_column,

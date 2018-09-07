@@ -33,10 +33,12 @@ import pandas as pd
 #from sklearn import metrics
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
+import time
 
 #from train_linear_regression_model import train_linear_regression_model
 from train_neural_network_regression_model import train_neural_network_regression_model
 from scale_features import scale_features
+from save_load_variables import save_load_variables
 
 #%% define logging and data display format
 
@@ -101,21 +103,71 @@ validation_targets = validation_set[['NPV_percent']]
 
 #%% scale features
 
-scaled_training_features = scale_features(training_features, 'z-score')
-scaled_validation_features = scale_features(validation_features, 'z-score')
+scaling_type = 'z-score'
+scaled_training_features = scale_features(training_features, scaling_type)
+scaled_validation_features = scale_features(validation_features, scaling_type)
 
 #%% train using neural network regression model
 
+# define parameters
+
+learning_rate = 0.001
+steps = 2000
+batch_size = 5
+hidden_units = [20]
+weight_column = None
+dropout = None
+batch_norm = True
+optimiser = 'Adam'
+
+# directory for saving the model
+
+timestr = time.strftime('%Y%m%d-%H%M%S')
+model_dir = 'models\\' + timestr
+
+# train the model
+
 dnn_regressor, training_predictions, validation_predictions = train_neural_network_regression_model(
-    learning_rate = 0.001,
-    steps = 2200,
-    batch_size = 5,
-    hidden_units = [20, 20],
-    weight_column = None,
-    dropout = None,
-    batch_norm = True,
-    optimiser = 'Adam',
+    learning_rate = learning_rate,
+    steps = steps,
+    batch_size = batch_size,
+    hidden_units = hidden_units,
+    weight_column = weight_column,
+    dropout = dropout,
+    batch_norm = batch_norm,
+    optimiser = optimiser,
+    model_dir = model_dir,
     training_features = scaled_training_features,
     training_targets = training_targets,
     validation_features = scaled_validation_features,
     validation_targets = validation_targets)
+
+# save variables
+
+variables_to_save = {'learning_rate': learning_rate,
+                     'steps': steps,
+                     'batch_size': batch_size,
+                     'hidden_units': hidden_units,
+                     'weight_column': weight_column,
+                     'dropout': dropout,
+                     'batch_norm': batch_norm,
+                     'optimiser': optimiser,
+                     'model_dir': model_dir,
+                     'training_set': training_set,
+                     'training_features': training_features,
+                     'scaled_training_features': scaled_training_features,
+                     'training_targets': training_targets,
+                     'training_predictions': training_predictions,
+                     'validation_set': validation_set,
+                     'validation_features': validation_features,
+                     'scaled_validation_features': scaled_validation_features,
+                     'validation_targets': validation_targets,
+                     'validation_predictions': validation_predictions,
+                     'fibroid_dataframe': fibroid_dataframe,
+                     'num_training': num_training,
+                     'num_validation': num_validation,
+                     'split_ratio': split_ratio,
+                     'timestr': timestr,
+                     'scaling_type': scaling_type}
+
+save_load_variables(model_dir, variables_to_save, 'save')
