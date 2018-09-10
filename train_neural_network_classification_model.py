@@ -56,7 +56,7 @@ def train_neural_network_classification_model(
         model_dir: directory to save the checkpoint ('None' if no saving)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
-        calidation_features: one or more columns of validation features (DataFrame)
+        validation_features: one or more columns of validation features (DataFrame)
         validation_targets: a single column of validation targets (DataFrame)
         
     Returns:

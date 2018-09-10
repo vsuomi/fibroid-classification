@@ -48,7 +48,7 @@ def train_linear_regression_model(
         optimiser: type of the optimiser (GradientDescent, Ftrl)
         training_features: one or more columns of training features (DataFrame)
         training_targets: a single column of training targets (DataFrame)
-        calidation_features: one or more columns of validation features (DataFrame)
+        validation_features: one or more columns of validation features (DataFrame)
         validation_targets: a single column of validation targets (DataFrame)
         
     Returns:
