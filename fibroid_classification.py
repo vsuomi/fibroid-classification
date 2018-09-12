@@ -116,6 +116,18 @@ scaling_type = 'z-score'
 scaled_training_features = scale_features(training_features, scaling_type)
 scaled_validation_features = scale_features(validation_features, scaling_type)
 
+#%% create weight columns
+
+weight_neg = fibroid_dataframe['NPV_is_high'].sum() / len(fibroid_dataframe)
+weight_pos = 1.0 - weight_neg
+scaled_training_features['weight_column'] = ((training_targets['NPV_is_high'] == 1).astype(float)*weight_pos
+                        + (training_targets['NPV_is_high'] == 0).astype(float)*weight_neg)
+scaled_validation_features['weight_column'] = ((validation_targets['NPV_is_high'] == 1).astype(float)*weight_pos
+                        + (validation_targets['NPV_is_high'] == 0).astype(float)*weight_neg)
+weight_column = 'weight_column'
+
+#weight_column = None
+
 #%% train using neural network classification model function
 
 # define parameters
@@ -124,7 +136,6 @@ learning_rate = 0.001
 steps = 1200
 batch_size = 5
 hidden_units = [20]
-weight_column = None
 dropout = None
 batch_norm = True
 optimiser = 'Adam'
