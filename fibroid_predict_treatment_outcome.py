@@ -31,6 +31,7 @@ from IPython import display
 import numpy as np
 import pandas as pd
 #from sklearn import metrics
+from sklearn import model_selection
 import tensorflow as tf
 #from tensorflow.python.data import Dataset
 import time
@@ -65,12 +66,7 @@ display.display(fibroid_dataframe.describe())
 
 #%% divide data into training and validation sets
 
-split_ratio = 0.7
-num_training = round(split_ratio*len(fibroid_dataframe))
-num_validation = len(fibroid_dataframe) - num_training
-
-training_set = fibroid_dataframe.head(num_training)
-validation_set = fibroid_dataframe.tail(num_validation)
+training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = 0.25)
 
 #%% display correlation matrix to help select suitable features
 
