@@ -86,7 +86,7 @@ print('\nCorrelation matrix:\n')
 display.display(training_set.corr())
 
 #%% select features and targets
-training_features = training_set[['Age', 'History_of_pregnancy',
+training_features = training_set[['History_of_pregnancy',
                                   'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
                                   'Fibroid_distance', 'intramural', 'subserosal', 
                                   'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
@@ -103,12 +103,12 @@ training_features = training_set[['Age', 'History_of_pregnancy',
 #                                  'Fibroid_volume']]
 training_targets = training_set[['NPV_is_high']]
 
-validation_features = validation_set[['Age', 'History_of_pregnancy',
-                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                  'Fibroid_distance', 'intramural', 'subserosal', 
-                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-                                  'Fibroid_volume']]
+validation_features = validation_set[['History_of_pregnancy',
+                                      'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                      'Fibroid_distance', 'intramural', 'subserosal', 
+                                      'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                                      'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+                                      'Fibroid_volume']]
 #validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
@@ -143,13 +143,13 @@ weight_column = 'weight_column'
 # define parameters
 
 learning_rate = 0.001
-steps = 1800
+steps = 2800
 batch_size = 5
 hidden_units = [25]
 dropout = 0.3
 batch_norm = True
 optimiser = 'Adam'
-save_model = False
+save_model = True
 
 # directory for saving the model
 
@@ -200,8 +200,6 @@ if save_model is True:
                          'validation_targets': validation_targets,
                          'validation_probabilities': validation_probabilities,
                          'fibroid_dataframe': fibroid_dataframe,
-                         'num_training': num_training,
-                         'num_validation': num_validation,
                          'split_ratio': split_ratio,
                          'timestr': timestr,
                          'scaling_type': scaling_type,

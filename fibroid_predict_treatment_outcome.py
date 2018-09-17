@@ -166,8 +166,6 @@ if save_model is True:
                          'validation_targets': validation_targets,
                          'validation_predictions': validation_predictions,
                          'fibroid_dataframe': fibroid_dataframe,
-                         'num_training': num_training,
-                         'num_validation': num_validation,
                          'split_ratio': split_ratio,
                          'timestr': timestr,
                          'scaling_type': scaling_type}
