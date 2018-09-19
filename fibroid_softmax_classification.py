@@ -89,7 +89,8 @@ display.display(fibroid_dataframe.describe())
 
 # stratified splitting for unbalanced datasets
 
-training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = 0.25,
+split_ratio = 0.15
+training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = split_ratio,
                                               stratify = fibroid_dataframe[class_label])
 
 #%% display correlation matrix to help select suitable features
@@ -146,14 +147,14 @@ if weight_column is not None:
 # define parameters
 
 learning_rate = 0.001
-steps = 3000
+steps = 2500
 batch_size = 5
 hidden_units = [25]
 n_classes = 4
 dropout = 0.3
 batch_norm = True
 optimiser = 'Adam'
-save_model = False
+save_model = True
 
 # directory for saving the model
 

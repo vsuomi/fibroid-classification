@@ -89,7 +89,8 @@ display.display(fibroid_dataframe.describe())
 
 # stratified splitting for unbalanced datasets
 
-training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = 0.25,
+split_ratio = 0.25
+training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = split_ratio,
                                               stratify = fibroid_dataframe[class_label])
 
 #%% display correlation matrix to help select suitable features
