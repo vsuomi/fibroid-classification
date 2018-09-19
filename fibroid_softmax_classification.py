@@ -40,6 +40,7 @@ import time
 from train_neural_network_softmax_classification_model import train_neural_network_softmax_classification_model
 from scale_features import scale_features
 from save_load_variables import save_load_variables
+from calculate_class_weights import calculate_class_weights
 
 #%% define logging and data display format
 
@@ -51,6 +52,10 @@ pd.options.display.float_format = '{:.1f}'.format
 
 fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep = ',')
 
+#%% define class label (training target)
+
+class_label = 'NPV_class'
+
 #%% plot NPV histogram
 
 fibroid_dataframe['NPV_percent'].hist(bins = 20)
@@ -59,6 +64,13 @@ fibroid_dataframe['NPV_percent'].hist(bins = 20)
 
 NPV_bins = [-1, 20, 60, 80, 100]
 fibroid_dataframe['NPV_class'] = fibroid_dataframe['NPV_percent'].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+
+#%% create weight column
+
+fibroid_dataframe['weight_column'] = calculate_class_weights(fibroid_dataframe[class_label])
+weight_column = 'weight_column'
+
+#weight_column = None
 
 #%% format data
 
@@ -78,7 +90,7 @@ display.display(fibroid_dataframe.describe())
 # stratified splitting for unbalanced datasets
 
 training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = 0.25,
-                                              stratify = fibroid_dataframe['NPV_class'])
+                                              stratify = fibroid_dataframe[class_label])
 
 #%% display correlation matrix to help select suitable features
 
@@ -100,7 +112,7 @@ training_features = training_set[['Age', 'History_of_pregnancy',
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
-training_targets = training_set[['NPV_class']]
+training_targets = training_set[[class_label]]
 
 validation_features = validation_set[['Age', 'History_of_pregnancy',
                                       'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
@@ -115,7 +127,7 @@ validation_features = validation_set[['Age', 'History_of_pregnancy',
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
-validation_targets = validation_set[['NPV_class']]
+validation_targets = validation_set[[class_label]]
 
 #%% scale features
 
@@ -123,9 +135,11 @@ scaling_type = 'z-score'
 scaled_training_features = scale_features(training_features, scaling_type)
 scaled_validation_features = scale_features(validation_features, scaling_type)
 
-#%% create weight columns
+#%% add weight column
 
-weight_column = None
+if weight_column is not None:
+    scaled_training_features['weight_column'] = training_set['weight_column']
+    scaled_validation_features['weight_column'] = validation_set['weight_column']
 
 #%% train using neural network classification model function
 
@@ -139,7 +153,7 @@ n_classes = 4
 dropout = 0.3
 batch_norm = True
 optimiser = 'Adam'
-save_model = True
+save_model = False
 
 # directory for saving the model
 
@@ -195,6 +209,7 @@ if save_model is True:
                          'split_ratio': split_ratio,
                          'timestr': timestr,
                          'scaling_type': scaling_type,
-                         'NPV_bins': NPV_bins}
+                         'NPV_bins': NPV_bins,
+                         'class_label': class_label}
     
     save_load_variables(model_dir, variables_to_save, 'save')

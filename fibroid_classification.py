@@ -40,6 +40,7 @@ import time
 from train_neural_network_classification_model import train_neural_network_classification_model
 from scale_features import scale_features
 from save_load_variables import save_load_variables
+from calculate_class_weights import calculate_class_weights
 
 #%% define logging and data display format
 
@@ -49,7 +50,11 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep=',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep = ',')
+
+#%% define class label (training target)
+
+class_label = 'NPV_is_high'
 
 #%% plot NPV histogram
 
@@ -59,6 +64,13 @@ fibroid_dataframe['NPV_percent'].hist(bins = 20)
 
 NPV_threshold = 80
 fibroid_dataframe['NPV_is_high'] = (fibroid_dataframe['NPV_percent'] > NPV_threshold).astype(float)
+
+#%% create weight column
+
+fibroid_dataframe['weight_column'] = calculate_class_weights(fibroid_dataframe[class_label])
+weight_column = 'weight_column'
+
+#weight_column = None
 
 #%% format data
 
@@ -78,7 +90,7 @@ display.display(fibroid_dataframe.describe())
 # stratified splitting for unbalanced datasets
 
 training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = 0.25,
-                                              stratify = fibroid_dataframe['NPV_is_high'])
+                                              stratify = fibroid_dataframe[class_label])
 
 #%% display correlation matrix to help select suitable features
 
@@ -86,11 +98,9 @@ print('\nCorrelation matrix:\n')
 display.display(training_set.corr())
 
 #%% select features and targets
-training_features = training_set[['History_of_pregnancy',
-                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                  'Fibroid_distance', 'intramural', 'subserosal', 
-                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+
+training_features = training_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'Fibroid_distance',
                                   'Fibroid_volume']]
 #training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -101,13 +111,10 @@ training_features = training_set[['History_of_pregnancy',
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
-training_targets = training_set[['NPV_is_high']]
+training_targets = training_set[[class_label]]
 
-validation_features = validation_set[['History_of_pregnancy',
-                                      'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                      'Fibroid_distance', 'intramural', 'subserosal', 
-                                      'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-                                      'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+validation_features = validation_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                      'Fibroid_distance',
                                       'Fibroid_volume']]
 #validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -118,7 +125,7 @@ validation_features = validation_set[['History_of_pregnancy',
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
-validation_targets = validation_set[['NPV_is_high']]
+validation_targets = validation_set[[class_label]]
 
 #%% scale features
 
@@ -126,30 +133,24 @@ scaling_type = 'z-score'
 scaled_training_features = scale_features(training_features, scaling_type)
 scaled_validation_features = scale_features(validation_features, scaling_type)
 
-#%% create weight columns
+#%% add weight column
 
-weight_neg = fibroid_dataframe['NPV_is_high'].sum() / len(fibroid_dataframe)
-weight_pos = 1.0 - weight_neg
-scaled_training_features['weight_column'] = ((training_targets['NPV_is_high'] == 1).astype(float)*weight_pos
-                        + (training_targets['NPV_is_high'] == 0).astype(float)*weight_neg)
-scaled_validation_features['weight_column'] = ((validation_targets['NPV_is_high'] == 1).astype(float)*weight_pos
-                        + (validation_targets['NPV_is_high'] == 0).astype(float)*weight_neg)
-weight_column = 'weight_column'
-
-#weight_column = None
+if weight_column is not None:
+    scaled_training_features['weight_column'] = training_set['weight_column']
+    scaled_validation_features['weight_column'] = validation_set['weight_column']
 
 #%% train using neural network classification model function
 
 # define parameters
 
 learning_rate = 0.001
-steps = 2800
+steps = 3200
 batch_size = 5
 hidden_units = [25]
 dropout = 0.3
 batch_norm = True
 optimiser = 'Adam'
-save_model = True
+save_model = False
 
 # directory for saving the model
 
@@ -203,6 +204,7 @@ if save_model is True:
                          'split_ratio': split_ratio,
                          'timestr': timestr,
                          'scaling_type': scaling_type,
-                         'NPV_threshold': NPV_threshold}
+                         'NPV_threshold': NPV_threshold,
+                         'class_label': class_label}
     
     save_load_variables(model_dir, variables_to_save, 'save')
