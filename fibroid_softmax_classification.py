@@ -50,7 +50,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\training_and_validation_data.csv', sep = ',')
 
 #%% define class label (training target)
 
@@ -100,9 +100,8 @@ display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[['Age', 'History_of_pregnancy',
-                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                  'Fibroid_distance', 'Type_I', 'Type_II', 'Type_III',
+training_features = training_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'Fibroid_distance',
                                   'Fibroid_volume']]
 #training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -115,9 +114,8 @@ training_features = training_set[['Age', 'History_of_pregnancy',
 #                                  'Fibroid_volume']]
 training_targets = training_set[[class_label]]
 
-validation_features = validation_set[['Age', 'History_of_pregnancy',
-                                      'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                      'Fibroid_distance', 'Type_I', 'Type_II', 'Type_III',
+validation_features = validation_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                      'Fibroid_distance',
                                       'Fibroid_volume']]
 #validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -147,7 +145,7 @@ if weight_column is not None:
 # define parameters
 
 learning_rate = 0.001
-steps = 2500
+steps = 3000
 batch_size = 5
 hidden_units = [25]
 n_classes = 4
