@@ -50,11 +50,11 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\test_data.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\training_and_validation_data.csv', sep = ',')
 
 #%% define class label (training target)
 
-class_label = 'NPV_is_high'
+class_label = 'Reintervention'
 
 #%% plot NPV histogram
 
@@ -89,7 +89,7 @@ display.display(fibroid_dataframe.describe())
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 0.25
+split_ratio = 0.15
 training_set, validation_set = model_selection.train_test_split(fibroid_dataframe, test_size = split_ratio,
                                               stratify = fibroid_dataframe[class_label])
 
@@ -100,8 +100,14 @@ display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                  'Fibroid_distance',
+training_features = training_set[['white', 'black', 'asian', 'Age', 'History_of_pregnancy',
+                                  'Live_births', 'esmya', 'open_myomectomy', 
+                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+                                  'Fibroid_distance', 'intramural', 'subserosal', 
+                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
                                   'Fibroid_volume']]
 #training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -114,9 +120,15 @@ training_features = training_set[['Subcutaneous_fat_thickness', 'Front-back_dist
 #                                  'Fibroid_volume']]
 training_targets = training_set[[class_label]]
 
-validation_features = validation_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                      'Fibroid_distance',
-                                      'Fibroid_volume']]
+validation_features = validation_set[['white', 'black', 'asian', 'Age', 'History_of_pregnancy',
+                                  'Live_births', 'esmya', 'open_myomectomy', 
+                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+                                  'Fibroid_distance', 'intramural', 'subserosal', 
+                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+                                  'Fibroid_volume']]
 #validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
@@ -148,10 +160,10 @@ learning_rate = 0.001
 steps = 3200
 batch_size = 5
 hidden_units = [25]
-dropout = 0.3
+dropout = None
 batch_norm = True
 optimiser = 'Adam'
-save_model = False
+save_model = True
 
 # directory for saving the model
 
