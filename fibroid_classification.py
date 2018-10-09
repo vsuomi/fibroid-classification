@@ -114,7 +114,7 @@ training_features = training_set[['white', 'black', 'asian', 'Age', 'History_of_
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
 #                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
 #                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+#                                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
@@ -134,7 +134,7 @@ validation_features = validation_set[['white', 'black', 'asian', 'Age', 'History
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
 #                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
 #                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+#                                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]

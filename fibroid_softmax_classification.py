@@ -62,7 +62,7 @@ fibroid_dataframe['NPV_percent'].hist(bins = 20)
 
 #%% categorise NPV into classes according to bins
 
-NPV_bins = [-1, 20, 60, 80, 100]
+NPV_bins = [-1, 29.9, 80, 100]
 fibroid_dataframe['NPV_class'] = fibroid_dataframe['NPV_percent'].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
 #%% create weight column
@@ -100,29 +100,29 @@ display.display(training_set.corr())
 
 #%% select features and targets
 
-training_features = training_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                  'Fibroid_distance',
-                                  'Fibroid_volume']]
+training_features = training_set[['Subcutaneous_fat_thickness', 'Abdominal_scars',
+                                  'Fibroid_diameter', 'Fibroid_distance',
+                                  'anteverted', 'retroverted']]
 #training_features = training_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
 #                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
 #                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+#                                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
 training_targets = training_set[[class_label]]
 
-validation_features = validation_set[['Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                                      'Fibroid_distance',
-                                      'Fibroid_volume']]
+validation_features = validation_set[['Subcutaneous_fat_thickness', 'Abdominal_scars',
+                                  'Fibroid_diameter', 'Fibroid_distance',
+                                  'anteverted', 'retroverted']]
 #validation_features = validation_set[['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
 #                                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
 #                                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
 #                                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                                  'Fibroid_size', 'Fibroid_distance', 'intramural', 'subserosal', 
+#                                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
 #                                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
 #                                  'Fibroid_volume']]
@@ -145,12 +145,12 @@ if weight_column is not None:
 # define parameters
 
 learning_rate = 0.001
-steps = 3000
+steps = 3600
 batch_size = 5
 hidden_units = [25]
-n_classes = 4
+n_classes = 3
 dropout = 0.3
-batch_norm = True
+batch_norm = False
 optimiser = 'Adam'
 save_model = True
 
