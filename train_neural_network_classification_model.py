@@ -156,26 +156,33 @@ def train_neural_network_classification_model(
         
     print('Model training finished')
     
-    # plot loss metrics over periods
+    # plot and save loss metrics over periods
     
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = (6, 4))
     
-    plt.subplot(1, 2, 1)
     plt.xlabel('Periods')
     plt.ylabel('LogLoss')
-    plt.title('LogLoss vs. Periods')
+    #plt.title('LogLoss vs. Periods')
     plt.tight_layout()
     plt.grid()
     plt.plot(training_log_losses, label = 'Training')
     plt.plot(validation_log_losses, label = 'Validation')
     plt.legend()
     
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'LogLoss.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'LogLoss.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'LogLoss.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
+    
     # get just the probabilities for the positive class
     
     training_probabilities = training_probabilities[:, 1]
     validation_probabilities = validation_probabilities[:, 1]
     
-    # calculate and plot ROC curves
+    # plot and save ROC curves
     
     training_false_positive_rate, training_true_positive_rate, training_thresholds = metrics.roc_curve(
             training_targets, training_probabilities)
@@ -183,16 +190,25 @@ def train_neural_network_classification_model(
     validation_false_positive_rate, validation_true_positive_rate, validation_thresholds = metrics.roc_curve(
             validation_targets, validation_probabilities)
     
-    plt.subplot(1, 2, 2)
+    plt.figure(figsize = (6, 4))
+    
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
-    plt.title('ROC')
+    #plt.title('ROC')
     plt.tight_layout()
     plt.grid()
     plt.plot(training_false_positive_rate, training_true_positive_rate, label = 'Training')
     plt.plot(validation_false_positive_rate, validation_true_positive_rate, label = 'Validation')
     plt.plot([0, 1], [0, 1], color = 'k')
     plt.legend()
+    
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'ROC.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'ROC.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'ROC.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
     
     # display final errors
     

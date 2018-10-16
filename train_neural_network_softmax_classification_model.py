@@ -179,43 +179,68 @@ def train_neural_network_softmax_classification_model(
     print('Final accuracy (on training data): %0.2f' % training_accuracy)
     print('Final accuracy (on validation data): %0.2f' % validation_accuracy)
     
-    # plot loss metrics over periods
+    # plot and save loss metrics over periods
     
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = (6, 4))
     
-    plt.subplot(1, 2, 1)
     plt.xlabel('Periods')
     plt.ylabel('LogLoss')
-    plt.title('LogLoss vs. Periods')
+    #plt.title('LogLoss vs. Periods')
     plt.tight_layout()
     plt.grid()
     plt.plot(training_log_losses, label = 'Training')
     plt.plot(validation_log_losses, label = 'Validation')
     plt.legend()
     
-    # plot confusion matrices
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'LogLoss.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'LogLoss.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'LogLoss.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
     
-    plt.figure(figsize = (12, 4))
+    # plot and save confusion matrix (training)
+    
+    plt.figure(figsize = (6, 4))
     
     cm = metrics.confusion_matrix(training_targets, final_training_predictions)
     # Normalize the confusion matrix by row (i.e by the number of samples in each class)
     cm_normalized = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
     ax = sns.heatmap(cm_normalized, cmap = 'bone_r')
     ax.set_aspect(1)
-    plt.title('Confusion matrix (training)')
+    #plt.title('Confusion matrix (training)')
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     
-    plt.figure(figsize = (12, 4))
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'confm_training.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'confm_training.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'confm_training.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
+        
+    # plot and save confusion matrix (validation)
+    
+    plt.figure(figsize = (6, 4))
     
     cm = metrics.confusion_matrix(validation_targets, final_validation_predictions)
     # Normalize the confusion matrix by row (i.e by the number of samples in each class)
     cm_normalized = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
     ax = sns.heatmap(cm_normalized, cmap = 'bone_r')
     ax.set_aspect(1)
-    plt.title('Confusion matrix (validation)')
+    #plt.title('Confusion matrix (validation)')
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'confm_validation.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'confm_validation.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'confm_validation.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
     
     # display final errors
     
