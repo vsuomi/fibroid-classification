@@ -159,32 +159,48 @@ def train_neural_network_regression_model(
         
     print('Model training finished')
     
-    # plot loss metrics over periods
+    # plot and save loss metrics over periods
     
-    plt.figure(figsize = (12, 4))
+    plt.figure(figsize = (6, 4))
     
-    plt.subplot(1, 2, 1)
     plt.xlabel('Periods')
     plt.ylabel('RMSE')
-    plt.title('Root Mean Squared Error vs. Periods')
+    #plt.title('Root Mean Squared Error vs. Periods')
     plt.tight_layout()
     plt.grid()
     plt.plot(training_rmse, label = 'Training')
     plt.plot(validation_rmse, label = 'Validation')
     plt.legend()
     
-    # plot predictions scatter plot
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'RMSE.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'RMSE.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'RMSE.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
     
-    plt.subplot(1, 2, 2)
+    # plot and save predictions scatter plot
+    
+    plt.figure(figsize = (6, 4))
+    
     plt.xlabel('Targets')
     plt.ylabel('Predictions')
-    plt.title('Prediction accuracy')
+    #plt.title('Prediction accuracy')
     plt.tight_layout()
     plt.grid()
     plt.scatter(training_targets, training_predictions, label = 'Training')
     plt.scatter(validation_targets, validation_predictions, label = 'Validation')
     plt.plot([0, 100], [0, 100], color = 'k')
     plt.legend()
+    
+    if model_dir is not None:
+        plt.savefig(model_dir + '\\' + 'accuracy.eps', dpi = 600, format = 'eps',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'accuracy.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+        plt.savefig(model_dir + '\\' + 'accuracy.png', dpi = 600, format = 'png',
+                    bbox_inches = 'tight', pad_inches = 0)
     
     # display final errors
     
