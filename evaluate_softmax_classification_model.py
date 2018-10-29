@@ -36,18 +36,18 @@ import tensorflow as tf
 #import time
 import seaborn as sns
 
-#from scale_features import scale_features
+from scale_features import scale_features
 from save_load_variables import save_load_variables
 from test_neural_network_softmax_classification_model import test_neural_network_softmax_classification_model
 
 #%% load variables
 
-model_dir = 'models\\20181016-090213'
+model_dir = 'models\\20181019-093616'
 variables_to_save = None
 variables = save_load_variables(model_dir, variables_to_save, 'load')
 for key,val in variables.items():
         exec(key + '=val')
-        
+               
 #%% calculate test predictions
         
 dnn_classifier, testing_predictions = test_neural_network_softmax_classification_model(
@@ -61,7 +61,7 @@ dnn_classifier, testing_predictions = test_neural_network_softmax_classification
         batch_norm,
         optimiser,
         model_dir,
-        scaled_testing_features,
+        testing_features,
         testing_targets
         )
 
