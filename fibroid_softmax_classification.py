@@ -55,7 +55,7 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe['NPV_percent'].apply(lambda x
 #%% define feature and target labels
 
 feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
-                  'Fibroid_diameter', 'Fibroid_distance',
+                  'Fibroid_diameter', 'Fibroid_distance', 
                   'anteverted', 'retroverted']
 
 #feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
@@ -87,6 +87,9 @@ scaled_features[weight_column] = calculate_class_weights(targets)
 
 #weight_column = None
 
+if weight_column is not None:
+    feature_labels.append(weight_column)
+
 #%% combine dataframes
 
 concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
@@ -102,11 +105,6 @@ validation_set, testing_set = model_selection.train_test_split(holdout_set, test
                                               stratify = holdout_set[target_label])
 
 #%% define features and targets
-
-# add weight column to features
-
-if weight_column is not None:
-    feature_labels.append(weight_column)
 
 training_features = training_set[feature_labels]
 validation_features = validation_set[feature_labels]
@@ -126,7 +124,7 @@ batch_size = 5
 hidden_units = [25]
 n_classes = 3
 dropout = 0.2
-batch_norm = True
+batch_norm = False
 optimiser = 'Adam'
 save_model = True
 
