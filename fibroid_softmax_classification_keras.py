@@ -27,6 +27,7 @@ import keras as k
 import pandas as pd
 import numpy as np
 import sklearn as sk
+import scipy as sp
 
 from scale_features import scale_features
 from plot_softmax_classification_performance import plot_softmax_classification_performance
@@ -74,8 +75,9 @@ targets = fibroid_dataframe[target_label]
 
 #%% scale features
 
-scaling_type = 'z-score'
-scaled_features = scale_features(features, scaling_type)
+scaled_features = pd.DataFrame(sp.stats.mstats.zscore(features),
+                               columns = list(features), 
+                               index = features.index, dtype = float)
 
 #%% calculate class weights
 
@@ -158,12 +160,12 @@ validation_loss, validation_accuracy = model.evaluate(validation_features, valid
 
 training_predictions = model.predict(training_features)
 training_predictions = np.argmax(training_predictions, axis = 1)
-training_predictions = pd.DataFrame(training_predictions, 
+training_predictions = pd.DataFrame(training_predictions, columns = ['Class'],
                                         index = training_features.index, dtype = float)
 
 validation_predictions = model.predict(validation_features)
 validation_predictions = np.argmax(validation_predictions, axis = 1)
-validation_predictions = pd.DataFrame(validation_predictions, 
+validation_predictions = pd.DataFrame(validation_predictions, columns = ['Class'],
                                         index = validation_features.index, dtype = float)
 
 # confusion matrix
