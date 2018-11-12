@@ -118,16 +118,16 @@ n_neurons = 25
 n_classes = 3
 batch_size = 5
 l1_reg = 0.0
-l2_reg = 0.01
+l2_reg = 0.1
 
 # build model
 
 model = k.models.Sequential()
 
 model.add(k.layers.Dense(n_neurons, 
-                         activation = 'relu', 
                          input_shape = (training_features.shape[1],),
-                         kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg)))
+                         kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg),
+                         activation = 'relu'))
 model.add(k.layers.Dense(n_classes, 
                          activation = 'softmax'))
 
@@ -137,7 +137,7 @@ model.compile(optimizer = optimiser,
 
 # train model
 
-history = model.fit(training_features, training_targets, 
+history = model.fit(training_features, training_targets, verbose = 0,
                     batch_size = batch_size, epochs = n_epochs, class_weight = class_weights,
                     validation_data = (validation_features, validation_targets))
 
