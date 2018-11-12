@@ -29,7 +29,6 @@ import numpy as np
 import sklearn as sk
 import scipy as sp
 
-from scale_features import scale_features
 from plot_softmax_classification_performance import plot_softmax_classification_performance
 
 #%% define logging and data display format
@@ -81,16 +80,8 @@ scaled_features = pd.DataFrame(sp.stats.mstats.zscore(features),
 
 #%% calculate class weights
 
-# number of instances and unique classes
-
-n_instances = len(targets)
-unique_values, unique_counts = np.unique(targets, return_counts = True)
-n_classes = len(unique_values)
-
-# calculate weights for each class
-
-class_weights = n_instances / (n_classes * unique_counts)
-class_weights = class_weights / class_weights.sum()
+class_weights = sk.utils.class_weight.compute_class_weight('balanced', np.unique(targets), 
+                                                  targets[target_label[0]])
 class_weights = dict(enumerate(class_weights))
 
 #%% combine dataframes
@@ -124,6 +115,7 @@ testing_targets = testing_set[target_label]
 optimiser = 'adam'
 n_epochs = 300
 n_neurons = 25
+n_classes = 3
 batch_size = 5
 l1_reg = 0.0
 l2_reg = 0.01
@@ -160,13 +152,13 @@ validation_loss, validation_accuracy = model.evaluate(validation_features, valid
 
 training_predictions = model.predict(training_features)
 training_predictions = np.argmax(training_predictions, axis = 1)
-training_predictions = pd.DataFrame(training_predictions, columns = ['Class'],
-                                        index = training_features.index, dtype = float)
+training_predictions = pd.DataFrame(training_predictions, columns = target_label,
+                                    index = training_features.index, dtype = float)
 
 validation_predictions = model.predict(validation_features)
 validation_predictions = np.argmax(validation_predictions, axis = 1)
-validation_predictions = pd.DataFrame(validation_predictions, columns = ['Class'],
-                                        index = validation_features.index, dtype = float)
+validation_predictions = pd.DataFrame(validation_predictions, columns = target_label,
+                                      index = validation_features.index, dtype = float)
 
 # confusion matrix
 
