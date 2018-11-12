@@ -27,7 +27,8 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     
     # training logloss
     
-    plt.figure()
+    plt.figure(figsize = (18, 4))
+    plt.subplot(1, 3, 1)
     plt.xlabel('Epoch')
     plt.ylabel('LogLoss')
     plt.plot(history.epoch, np.array(history.history['loss']),
@@ -39,7 +40,8 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     
     # confusion matrix (training)
     
-    plt.figure()
+#    plt.figure()
+    plt.subplot(1, 3, 2)
     ax = sns.heatmap(cm_training, cmap = 'bone_r')
     ax.set_aspect(1)
     #plt.title('Confusion matrix (training)')
@@ -48,7 +50,8 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     
     # confusion matrix (validation)
     
-    plt.figure()
+#    plt.figure()
+    plt.subplot(1, 3, 3)
     ax = sns.heatmap(cm_validation, cmap = 'bone_r')
     ax.set_aspect(1)
     #plt.title('Confusion matrix (validation)')
