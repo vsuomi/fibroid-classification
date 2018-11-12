@@ -23,7 +23,7 @@ import seaborn as sns
 
 #%% define function
 
-def plot_softmax_classification_performance(history, cm_training_normalized, cm_validation_normalized):
+def plot_softmax_classification_performance(history, cm_training, cm_validation):
     
     # training logloss
     
@@ -40,7 +40,7 @@ def plot_softmax_classification_performance(history, cm_training_normalized, cm_
     # confusion matrix (training)
     
     plt.figure()
-    ax = sns.heatmap(cm_training_normalized, cmap = 'bone_r')
+    ax = sns.heatmap(cm_training, cmap = 'bone_r')
     ax.set_aspect(1)
     #plt.title('Confusion matrix (training)')
     plt.ylabel('True label')
@@ -49,7 +49,7 @@ def plot_softmax_classification_performance(history, cm_training_normalized, cm_
     # confusion matrix (validation)
     
     plt.figure()
-    ax = sns.heatmap(cm_validation_normalized, cmap = 'bone_r')
+    ax = sns.heatmap(cm_validation, cmap = 'bone_r')
     ax.set_aspect(1)
     #plt.title('Confusion matrix (validation)')
     plt.ylabel('True label')

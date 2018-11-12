@@ -168,13 +168,11 @@ validation_predictions = pd.DataFrame(validation_predictions,
 # confusion matrix
 
 cm_training = metrics.confusion_matrix(training_targets, training_predictions)
+cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
+
 cm_validation = metrics.confusion_matrix(validation_targets, validation_predictions)
-
-# confusion matrix (normalised)
-
-cm_training_normalized = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
-cm_validation_normalized = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
+cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
 
 # plot training performance
 
-plot_softmax_classification_performance(history, cm_training_normalized, cm_validation_normalized)
+plot_softmax_classification_performance(history, cm_training, cm_validation)
