@@ -23,17 +23,16 @@ Created on Thu Nov  8 13:11:40 2018
 
 #%% import necessary libraries
 
-import tensorflow as tf
+import keras as k
 import pandas as pd
 import numpy as np
-from sklearn import model_selection, metrics
+import sklearn as sk
 
 from scale_features import scale_features
 from plot_softmax_classification_performance import plot_softmax_classification_performance
 
 #%% define logging and data display format
 
-tf.logging.set_verbosity(tf.logging.ERROR)
 pd.options.display.max_rows = 10
 pd.options.display.float_format = '{:.1f}'.format
 
@@ -101,9 +100,9 @@ concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
 # stratified splitting for unbalanced datasets
 
 split_ratio = 20
-training_set, holdout_set = model_selection.train_test_split(concat_dataframe, test_size = split_ratio,
+training_set, holdout_set = sk.model_selection.train_test_split(concat_dataframe, test_size = split_ratio,
                                               stratify = concat_dataframe[target_label])
-validation_set, testing_set = model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
+validation_set, testing_set = sk.model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
                                               stratify = holdout_set[target_label])
 
 #%% define features and targets
@@ -129,12 +128,14 @@ l2_reg = 0.01
 
 # build model
 
-model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(n_neurons, activation = 'relu', 
-                              input_shape = (training_features.shape[1],),
-                              kernel_regularizer = tf.keras.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg)),
-        tf.keras.layers.Dense(n_classes, activation = 'softmax')
-])
+model = k.models.Sequential()
+
+model.add(k.layers.Dense(n_neurons, 
+                         activation = 'relu', 
+                         input_shape = (training_features.shape[1],),
+                         kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg)))
+model.add(k.layers.Dense(n_classes, 
+                         activation = 'softmax'))
 
 model.compile(optimizer = optimiser,
               loss = 'sparse_categorical_crossentropy',
@@ -167,10 +168,10 @@ validation_predictions = pd.DataFrame(validation_predictions,
 
 # confusion matrix
 
-cm_training = metrics.confusion_matrix(training_targets, training_predictions)
+cm_training = sk.metrics.confusion_matrix(training_targets, training_predictions)
 cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
 
-cm_validation = metrics.confusion_matrix(validation_targets, validation_predictions)
+cm_validation = sk.metrics.confusion_matrix(validation_targets, validation_predictions)
 cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
 
 # plot training performance
