@@ -112,13 +112,14 @@ testing_targets = testing_set[target_label]
 
 # define parameters
 
-optimiser = 'adam'
+learning_rate = 0.001
 n_epochs = 300
 n_neurons = 25
 n_classes = 3
 batch_size = 5
 l1_reg = 0.0
-l2_reg = 0.1
+l2_reg = 0.0
+batch_norm = True
 
 # build model
 
@@ -128,10 +129,12 @@ model.add(k.layers.Dense(n_neurons,
                          input_shape = (training_features.shape[1],),
                          kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg),
                          activation = 'relu'))
+if batch_norm is True:
+    model.add(k.layers.BatchNormalization())
 model.add(k.layers.Dense(n_classes, 
                          activation = 'softmax'))
 
-model.compile(optimizer = optimiser,
+model.compile(optimizer = k.optimizers.Adam(lr = learning_rate),
               loss = 'sparse_categorical_crossentropy',
               metrics = ['categorical_accuracy'])
 
