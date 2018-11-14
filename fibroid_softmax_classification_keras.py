@@ -29,8 +29,11 @@ import numpy as np
 import sklearn as sk
 from sklearn.model_selection import train_test_split
 import scipy as sp
+import time
+import os
 
 from plot_softmax_classification_performance import plot_softmax_classification_performance
+from save_load_variables import save_load_variables
 
 #%% define logging and data display format
 
@@ -114,7 +117,7 @@ testing_targets = testing_set[target_label]
 # define parameters
 
 learning_rate = 0.001
-n_epochs = 500
+n_epochs = 1000
 n_neurons = 25
 n_classes = 3
 batch_size = 5
@@ -145,6 +148,8 @@ class PrintDot(k.callbacks.Callback):
   def on_epoch_end(self, epoch, logs):
     if epoch % 100 == 0: print('')
     print('.', end='')
+    
+timestr = time.strftime('%Y%m%d-%H%M%S')
 
 history = model.fit(training_features, training_targets, verbose = 0, callbacks=[PrintDot()],
                     batch_size = batch_size, epochs = n_epochs, class_weight = class_weights,
@@ -179,4 +184,51 @@ cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, n
 
 # plot training performance
 
-plot_softmax_classification_performance(history, cm_training, cm_validation)
+f1 = plot_softmax_classification_performance(history, cm_training, cm_validation)
+
+#%% save model
+
+model_dir = 'Keras models\\%s_TA%d_VA%d' % (timestr, 
+                                            round(training_accuracy*100), 
+                                            round(validation_accuracy*100))
+
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+    
+f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf',
+                    bbox_inches = 'tight', pad_inches = 0)
+
+variables_to_save = {'learning_rate': learning_rate,
+                     'n_epochs': n_epochs,
+                     'n_neurons': n_neurons,
+                     'n_classes': n_classes,
+                     'batch_size': batch_size,
+                     'l1_reg': l1_reg,
+                     'l2_reg': l2_reg,
+                     'batch_norm': batch_norm,
+                     'class_weights': class_weights,
+                     'NPV_bins': NPV_bins,
+                     'split_ratio': split_ratio,
+                     'timestr': timestr,
+                     'model_dir': model_dir,
+                     'fibroid_dataframe': fibroid_dataframe,
+                     'concat_dataframe': concat_dataframe,
+                     'holdout_set': holdout_set,
+                     'training_set': training_set,
+                     'training_features': training_features,
+                     'training_targets': training_targets,
+                     'validation_set': validation_set,
+                     'validation_features': validation_features,
+                     'validation_targets': validation_targets,
+                     'testing_set': testing_set,
+                     'testing_features': testing_features,
+                     'testing_targets': testing_targets,
+                     'scaled_features': scaled_features,
+                     'features': features,
+                     'targets': targets,
+                     'feature_labels': feature_labels,
+                     'target_label': target_label}
+    
+save_load_variables(model_dir, variables_to_save, 'save')
+
+model.save(model_dir + '\\' + 'keras_model.h5')
