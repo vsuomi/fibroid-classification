@@ -27,6 +27,7 @@ import keras as k
 import pandas as pd
 import numpy as np
 import sklearn as sk
+from sklearn.model_selection import train_test_split
 import scipy as sp
 
 from plot_softmax_classification_performance import plot_softmax_classification_performance
@@ -93,10 +94,10 @@ concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
 # stratified splitting for unbalanced datasets
 
 split_ratio = 20
-training_set, holdout_set = sk.model_selection.train_test_split(concat_dataframe, test_size = split_ratio,
-                                              stratify = concat_dataframe[target_label])
-validation_set, testing_set = sk.model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
-                                              stratify = holdout_set[target_label])
+training_set, holdout_set = train_test_split(concat_dataframe, test_size = split_ratio,
+                                             stratify = concat_dataframe[target_label])
+validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
+                                               stratify = holdout_set[target_label])
 
 #%% define features and targets
 
@@ -113,13 +114,13 @@ testing_targets = testing_set[target_label]
 # define parameters
 
 learning_rate = 0.001
-n_epochs = 300
+n_epochs = 500
 n_neurons = 25
 n_classes = 3
 batch_size = 5
 l1_reg = 0.0
-l2_reg = 0.0
-batch_norm = True
+l2_reg = 0.1
+batch_norm = False
 
 # build model
 
@@ -140,7 +141,12 @@ model.compile(optimizer = k.optimizers.Adam(lr = learning_rate),
 
 # train model
 
-history = model.fit(training_features, training_targets, verbose = 0,
+class PrintDot(k.callbacks.Callback):
+  def on_epoch_end(self, epoch, logs):
+    if epoch % 100 == 0: print('')
+    print('.', end='')
+
+history = model.fit(training_features, training_targets, verbose = 0, callbacks=[PrintDot()],
                     batch_size = batch_size, epochs = n_epochs, class_weight = class_weights,
                     validation_data = (validation_features, validation_targets))
 
