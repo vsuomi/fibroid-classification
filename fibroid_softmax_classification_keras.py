@@ -137,7 +137,7 @@ model.add(k.layers.Dense(n_classes,
 
 model.compile(optimizer = k.optimizers.Adam(lr = learning_rate),
               loss = 'sparse_categorical_crossentropy',
-              metrics = ['categorical_accuracy'])
+              metrics = ['accuracy'])
 
 # train model
 
