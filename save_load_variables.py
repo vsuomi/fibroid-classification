@@ -43,6 +43,7 @@ def save_load_variables(directory, variables, fname, opt):
         
         pickle_in = open(directory + '\\' + fname + '.pickle', 'rb')
         variables = pickle.load(pickle_in)
+        pickle_in.close()
         return variables
         
     else:
