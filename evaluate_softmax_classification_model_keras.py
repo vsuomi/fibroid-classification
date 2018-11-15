@@ -34,7 +34,7 @@ from save_load_variables import save_load_variables
 
 #%% load model and variables
 
-model_dir = 'Keras models\\20181115-135647_TA68_VA30'
+model_dir = 'Keras models\\20181115-152225_TA71_VA60'
 
 variables = save_load_variables(model_dir, None, 'variables', 'load')
 for key,val in variables.items():
@@ -65,7 +65,7 @@ validation_predictions = pd.DataFrame(validation_predictions, columns = target_l
 testing_predictions = model.predict(testing_features)
 testing_predictions = np.argmax(testing_predictions, axis = 1)
 testing_predictions = pd.DataFrame(testing_predictions, columns = target_label,
-                                      index = testing_features.index, dtype = float)
+                                   index = testing_features.index, dtype = float)
 
 # confusion matrix
 
