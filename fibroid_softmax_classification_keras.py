@@ -210,6 +210,7 @@ variables_to_save = {'learning_rate': learning_rate,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
                      'timestr': timestr,
+                     'history': history,
                      'model_dir': model_dir,
                      'fibroid_dataframe': fibroid_dataframe,
                      'concat_dataframe': concat_dataframe,
@@ -229,6 +230,6 @@ variables_to_save = {'learning_rate': learning_rate,
                      'feature_labels': feature_labels,
                      'target_label': target_label}
     
-save_load_variables(model_dir, variables_to_save, 'save')
+save_load_variables(model_dir, variables_to_save, 'variables', 'save')
 
 model.save(model_dir + '\\' + 'keras_model.h5')
