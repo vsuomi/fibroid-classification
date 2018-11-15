@@ -28,6 +28,7 @@ import pandas as pd
 import numpy as np
 import sklearn as sk
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 import scipy as sp
 import time
 import os
@@ -117,7 +118,7 @@ testing_targets = testing_set[target_label]
 # define parameters
 
 learning_rate = 0.001
-n_epochs = 1000
+n_epochs = 300
 n_neurons = 25
 n_classes = 3
 batch_size = 5
@@ -151,7 +152,7 @@ class PrintDot(k.callbacks.Callback):
     
 timestr = time.strftime('%Y%m%d-%H%M%S')
 
-history = model.fit(training_features, training_targets, verbose = 0, callbacks=[PrintDot()],
+history = model.fit(training_features, training_targets, verbose = 0, callbacks = [PrintDot()],
                     batch_size = batch_size, epochs = n_epochs, class_weight = class_weights,
                     validation_data = (validation_features, validation_targets))
 
@@ -176,10 +177,10 @@ validation_predictions = pd.DataFrame(validation_predictions, columns = target_l
 
 # confusion matrix
 
-cm_training = sk.metrics.confusion_matrix(training_targets, training_predictions)
+cm_training = confusion_matrix(training_targets, training_predictions)
 cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
 
-cm_validation = sk.metrics.confusion_matrix(validation_targets, validation_predictions)
+cm_validation = confusion_matrix(validation_targets, validation_predictions)
 cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
 
 # plot training performance
