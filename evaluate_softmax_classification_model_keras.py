@@ -83,23 +83,46 @@ cm_testing = cm_testing.astype('float') / cm_testing.sum(axis = 1)[:, np.newaxis
 
 # confusion matrix
 
-plt.figure(figsize = (6, 4))
+f1 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_training, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (training)')
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
 
-plt.figure(figsize = (6, 4))
+f2 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_validation, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (validation)')
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
 
-plt.figure(figsize = (6, 4))
+f3 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_testing, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (testing)')
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
+
+#%% save figures
+
+f1.savefig(model_dir + '\\' + 'cm_training.eps', dpi = 600, format = 'eps',
+            bbox_inches = 'tight', pad_inches = 0)
+f1.savefig(model_dir + '\\' + 'cm_training.pdf', dpi = 600, format = 'pdf',
+            bbox_inches = 'tight', pad_inches = 0)
+f1.savefig(model_dir + '\\' + 'cm_training.png', dpi = 600, format = 'png',
+            bbox_inches = 'tight', pad_inches = 0)
+
+f2.savefig(model_dir + '\\' + 'cm_validation.eps', dpi = 600, format = 'eps',
+            bbox_inches = 'tight', pad_inches = 0)
+f2.savefig(model_dir + '\\' + 'cm_validation.pdf', dpi = 600, format = 'pdf',
+            bbox_inches = 'tight', pad_inches = 0)
+f2.savefig(model_dir + '\\' + 'cm_validation.png', dpi = 600, format = 'png',
+            bbox_inches = 'tight', pad_inches = 0)
+
+f3.savefig(model_dir + '\\' + 'cm_testing.eps', dpi = 600, format = 'eps',
+            bbox_inches = 'tight', pad_inches = 0)
+f3.savefig(model_dir + '\\' + 'cm_testing.pdf', dpi = 600, format = 'pdf',
+            bbox_inches = 'tight', pad_inches = 0)
+f3.savefig(model_dir + '\\' + 'cm_testing.png', dpi = 600, format = 'png',
+            bbox_inches = 'tight', pad_inches = 0)
