@@ -24,13 +24,13 @@ def save_load_variables(directory, variables, fname, opt):
     
     '''
     Args:
-        directory: directory to save the model
-        variables: variables to save
+        directory: path to file
+        variables: variables to save/load/add
         fname: filename
-        opt: whether save ('save') or load ('load') variables
+        opt: whether save ('save'), load ('load') or add ('add') variables
         
     Returns:
-        variables: saved variables
+        variables: loaded variables
     '''
     
     if opt == 'save':
@@ -45,6 +45,16 @@ def save_load_variables(directory, variables, fname, opt):
         variables = pickle.load(pickle_in)
         pickle_in.close()
         return variables
+    
+    elif opt == 'add':
+        
+        pickle_in = open(directory + '\\' + fname + '.pickle', 'rb')
+        old_variables = pickle.load(pickle_in)
+        pickle_in.close()
+        new_variables = {**old_variables, **variables}
+        pickle_out = open(directory + '\\' + fname + '.pickle', 'wb')
+        pickle.dump(new_variables, pickle_out)
+        pickle_out.close()
         
     else:
         
