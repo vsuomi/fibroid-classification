@@ -34,10 +34,9 @@ from save_load_variables import save_load_variables
 
 #%% load model and variables
 
-model_dir = 'Keras models\\20181114-143637_TA88_VA30'
+model_dir = 'Keras models\\20181115-135647_TA68_VA30'
 
-variables_to_save = None
-variables = save_load_variables(model_dir, variables_to_save, 'load')
+variables = save_load_variables(model_dir, None, 'variables', 'load')
 for key,val in variables.items():
         exec(key + '=val')
         
@@ -87,24 +86,37 @@ f1 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_training, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (training)')
-plt.ylabel('True label')
-plt.xlabel('Predicted label')
+plt.ylabel('True class')
+plt.xlabel('Predicted class')
 
 f2 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_validation, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (validation)')
-plt.ylabel('True label')
-plt.xlabel('Predicted label')
+plt.ylabel('True class')
+plt.xlabel('Predicted class')
 
 f3 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(cm_testing, cmap = 'bone_r')
 ax.set_aspect(1)
 #plt.title('Confusion matrix (testing)')
-plt.ylabel('True label')
-plt.xlabel('Predicted label')
+plt.ylabel('True class')
+plt.xlabel('Predicted class')
 
-#%% save figures
+# training history
+
+f4 = plt.figure(figsize = (6, 4))
+#plt.title('Training and validation loss')
+plt.xlabel('Epoch')
+plt.ylabel('LogLoss')
+plt.plot(history.epoch, np.array(history.history['loss']),
+         label='Training loss')
+plt.plot(history.epoch, np.array(history.history['val_loss']),
+         label = 'Validation loss')
+plt.legend()
+plt.grid()
+
+#%% save figures and metrics
 
 f1.savefig(model_dir + '\\' + 'cm_training.eps', dpi = 600, format = 'eps',
             bbox_inches = 'tight', pad_inches = 0)
@@ -126,3 +138,25 @@ f3.savefig(model_dir + '\\' + 'cm_testing.pdf', dpi = 600, format = 'pdf',
             bbox_inches = 'tight', pad_inches = 0)
 f3.savefig(model_dir + '\\' + 'cm_testing.png', dpi = 600, format = 'png',
             bbox_inches = 'tight', pad_inches = 0)
+
+f4.savefig(model_dir + '\\' + 'LogLoss.eps', dpi = 600, format = 'eps',
+            bbox_inches = 'tight', pad_inches = 0)
+f4.savefig(model_dir + '\\' + 'LogLoss.pdf', dpi = 600, format = 'pdf',
+            bbox_inches = 'tight', pad_inches = 0)
+f4.savefig(model_dir + '\\' + 'LogLoss.png', dpi = 600, format = 'png',
+            bbox_inches = 'tight', pad_inches = 0)
+
+variables_to_save = {'training_loss': training_loss,
+                     'training_accuracy': training_accuracy,
+                     'training_predictions': training_predictions,
+                     'validation_loss': validation_loss,
+                     'validation_accuracy': validation_accuracy,
+                     'validation_predictions': validation_predictions,
+                     'testing_loss': testing_loss,
+                     'testing_accuracy': testing_accuracy,
+                     'testing_predictions': testing_predictions,
+                     'cm_training': cm_training,
+                     'cm_validation': cm_validation,
+                     'cm_testing': cm_testing}
+
+save_load_variables(model_dir, variables_to_save, 'variables', 'add')
