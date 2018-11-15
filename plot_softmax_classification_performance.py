@@ -46,8 +46,8 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     ax = sns.heatmap(cm_training, cmap = 'bone_r')
     ax.set_aspect(1)
     plt.title('Confusion matrix (training)')
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True class')
+    plt.xlabel('Predicted class')
     
     # confusion matrix (validation)
     
@@ -56,7 +56,7 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     ax = sns.heatmap(cm_validation, cmap = 'bone_r')
     ax.set_aspect(1)
     plt.title('Confusion matrix (validation)')
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True class')
+    plt.xlabel('Predicted class')
     
     return f1
