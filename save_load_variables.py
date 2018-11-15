@@ -20,12 +20,13 @@ import pickle
 
 #%% save or load variables
 
-def save_load_variables(directory, variables, opt):
+def save_load_variables(directory, variables, fname, opt):
     
     '''
     Args:
         directory: directory to save the model
         variables: variables to save
+        fname: filename
         opt: whether save ('save') or load ('load') variables
         
     Returns:
@@ -34,13 +35,13 @@ def save_load_variables(directory, variables, opt):
     
     if opt == 'save':
         
-        pickle_out = open(directory + '\\' + 'variables.pickle', 'wb')
+        pickle_out = open(directory + '\\' + fname + '.pickle', 'wb')
         pickle.dump(variables, pickle_out)
         pickle_out.close()
         
     elif opt == 'load':
         
-        pickle_in = open(directory + '\\' + 'variables.pickle', 'rb')
+        pickle_in = open(directory + '\\' + fname + '.pickle', 'rb')
         variables = pickle.load(pickle_in)
         return variables
         
