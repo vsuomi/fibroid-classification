@@ -129,7 +129,8 @@ dropout = None
 
 # build model
 
-del model
+if 'model' in locals():
+    del model
 
 model = k.models.Sequential()
 
