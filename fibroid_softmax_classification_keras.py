@@ -125,8 +125,11 @@ batch_size = 5
 l1_reg = 0.0
 l2_reg = 0.1
 batch_norm = False
+dropout = None
 
 # build model
+
+del model
 
 model = k.models.Sequential()
 
@@ -136,12 +139,16 @@ model.add(k.layers.Dense(n_neurons,
                          activation = 'relu'))
 if batch_norm is True:
     model.add(k.layers.BatchNormalization())
+if dropout is not None:
+    model.add(k.layers.Dropout(dropout))
 model.add(k.layers.Dense(n_classes, 
                          activation = 'softmax'))
 
 model.compile(optimizer = k.optimizers.Adam(lr = learning_rate),
               loss = 'sparse_categorical_crossentropy',
               metrics = ['accuracy'])
+
+model.summary()
 
 # train model
 
@@ -207,6 +214,7 @@ variables_to_save = {'learning_rate': learning_rate,
                      'l1_reg': l1_reg,
                      'l2_reg': l2_reg,
                      'batch_norm': batch_norm,
+                     'dropout': dropout,
                      'class_weights': class_weights,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
