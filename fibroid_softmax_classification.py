@@ -50,7 +50,7 @@ fibroid_dataframe['NPV_percent'].hist(bins = 20)
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
-fibroid_dataframe['NPV_class'] = fibroid_dataframe['NPV_percent'].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
 #%% define feature and target labels
 
