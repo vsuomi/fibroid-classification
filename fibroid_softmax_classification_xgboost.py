@@ -84,10 +84,6 @@ scaled_features = pd.DataFrame(sp.stats.mstats.zscore(features),
                                columns = list(features), 
                                index = features.index, dtype = float)
 
-#%% calculate class weights
-
-class_weights = sk.utils.class_weight.compute_sample_weight('balanced', targets)
-
 #%% combine dataframes
 
 concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
@@ -112,6 +108,10 @@ training_targets = training_set[target_label]
 validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
 
+#%% calculate class weights
+
+class_weights = sk.utils.class_weight.compute_sample_weight('balanced', training_targets)
+
 #%% build and train model
 
 param = {
@@ -120,8 +120,8 @@ param = {
         'eta': 0.2,
         'max_depth': 3,
         'silent': 1,
-        'alpha': 0.01,
-        'labmda': 0.01,
+        'alpha': 0.0,
+        'labmda': 0.2,
         }
 
 trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
