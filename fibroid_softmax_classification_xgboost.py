@@ -44,7 +44,22 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe.csv', sep = ',')
+
+#%% calculate nan percent for each label
+
+nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['% of NaN'])
+
+#%% replace nan values
+
+fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
+fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
+fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
+fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
+fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
+fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
+fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
+fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
 
 #%% display NPV histogram
 
@@ -57,19 +72,19 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda
 
 #%% define feature and target labels
 
-feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
-                  'Fibroid_diameter', 'Fibroid_distance', 
-                  'anteverted', 'retroverted', 'vertical']
+#feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
+#                  'Fibroid_diameter', 'Fibroid_distance', 
+#                  'anteverted', 'retroverted', 'vertical']
 
-#feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-#                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
-#                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
-#                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-#                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
-#                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-#                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-#                  'Fibroid_volume']
+feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
+                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
+                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+                  'Fibroid_volume', 'ADC']
 
 target_label = ['NPV_class']
 
@@ -121,7 +136,7 @@ param = {
         'max_depth': 3,
         'silent': 1,
         'alpha': 0.0,
-        'labmda': 0.2,
+        'lambda': 0.0,
         }
 
 trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
