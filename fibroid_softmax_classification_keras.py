@@ -43,7 +43,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
 
 #%% display NPV histogram
 
@@ -58,7 +58,7 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda
 
 feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
                   'Fibroid_diameter', 'Fibroid_distance', 
-                  'anteverted', 'retroverted']
+                  'anteverted', 'retroverted', 'vertical']
 
 #feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -97,7 +97,7 @@ concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 20
+split_ratio = 40
 training_set, holdout_set = train_test_split(concat_dataframe, test_size = split_ratio,
                                              stratify = concat_dataframe[target_label])
 validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
@@ -120,11 +120,12 @@ testing_targets = testing_set[target_label]
 learning_rate = 0.001
 n_epochs = 300
 n_neurons = 25
+n_layers = 2
 n_classes = 3
 batch_size = 5
 l1_reg = 0.0
-l2_reg = 0.1
-batch_norm = False
+l2_reg = 0.0
+batch_norm = True
 dropout = None
 
 # build model
@@ -142,6 +143,19 @@ if batch_norm is True:
     model.add(k.layers.BatchNormalization())
 if dropout is not None:
     model.add(k.layers.Dropout(dropout))
+    
+i = 1   
+while i < n_layers:
+    model.add(k.layers.Dense(n_neurons,
+                             kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg),
+                             activation = 'relu'))
+    if batch_norm is True:
+        model.add(k.layers.BatchNormalization())
+    if dropout is not None:
+        model.add(k.layers.Dropout(dropout))
+    i += 1
+del i
+
 model.add(k.layers.Dense(n_classes, 
                          activation = 'softmax'))
 
@@ -211,6 +225,7 @@ variables_to_save = {'learning_rate': learning_rate,
                      'n_epochs': n_epochs,
                      'n_neurons': n_neurons,
                      'n_classes': n_classes,
+                     'n_layers': n_layers,
                      'batch_size': batch_size,
                      'l1_reg': l1_reg,
                      'l2_reg': l2_reg,
