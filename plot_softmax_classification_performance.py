@@ -23,7 +23,7 @@ import seaborn as sns
 
 #%% define function
 
-def plot_softmax_classification_performance(history, cm_training, cm_validation):
+def plot_softmax_classification_performance(model, losses, cm_training, cm_validation):
     
     # training logloss
     
@@ -31,11 +31,20 @@ def plot_softmax_classification_performance(history, cm_training, cm_validation)
     plt.subplot(1, 3, 1)
     plt.title('Training and validation loss')
     plt.xlabel('Epoch')
-    plt.ylabel('LogLoss')
-    plt.plot(history.epoch, np.array(history.history['loss']),
-             label='Training loss')
-    plt.plot(history.epoch, np.array(history.history['val_loss']),
-             label = 'Validation loss')
+    plt.ylabel('Loss')
+    
+    if model == 'keras':
+        plt.plot(losses.epoch, np.array(losses.history['loss']),
+                 label = 'Training')
+        plt.plot(losses.epoch, np.array(losses.history['val_loss']),
+                 label = 'Validation')
+    if model == 'xgboost':
+        plt.plot(np.array(losses['training']['merror']),
+                 label = 'Training')
+        plt.plot(np.array(losses['validation']['merror']),
+                 label = 'Validation')
+    plt.grid()
+    plt.legend()
     plt.legend()
     plt.grid()
     
