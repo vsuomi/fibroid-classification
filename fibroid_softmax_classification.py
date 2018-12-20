@@ -24,14 +24,14 @@ Created on Tue Sep 18 10:34:21 2018
 
 from IPython import display
 import pandas as pd
+import numpy as np
 from sklearn import model_selection
+from sklearn.utils.class_weight import compute_sample_weight, compute_class_weight
 import tensorflow as tf
 import time
 
 from train_neural_network_softmax_classification_model import train_neural_network_softmax_classification_model
-from scale_features import scale_features
 from save_load_variables import save_load_variables
-from calculate_class_weights import calculate_class_weights
 
 #%% define logging and data display format
 
@@ -71,39 +71,17 @@ feature_labels = ['V2_system',
 
 target_label = ['NPV_class']
 
-#%% extract features and targets
-
-features = fibroid_dataframe[feature_labels]
-targets = fibroid_dataframe[target_label]
-
-#%% scale features
-
-scaling_type = 'z-score'
-scaled_features = scale_features(features, scaling_type)
-
-#%% create weight column
-
-weight_column = 'weight_column'
-scaled_features[weight_column] = calculate_class_weights(targets)
-
-#weight_column = None
-
-if weight_column is not None:
-    feature_labels.append(weight_column)
-
-#%% combine dataframes
-
-concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
-
 #%% randomise and divive data for cross-validation
 
 # stratified splitting for unbalanced datasets
 
 split_ratio = 40
-training_set, holdout_set = model_selection.train_test_split(concat_dataframe, test_size = split_ratio,
-                                              stratify = concat_dataframe[target_label])
+training_set, holdout_set = model_selection.train_test_split(fibroid_dataframe, test_size = split_ratio,
+                                              stratify = fibroid_dataframe[target_label])
 validation_set, testing_set = model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
                                               stratify = holdout_set[target_label])
+
+del holdout_set
 
 #%% define features and targets
 
@@ -115,14 +93,42 @@ training_targets = training_set[target_label]
 validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
 
+#%% scale features
+
+scaling_type = 'z-score'
+
+t_mean = training_features.mean()
+t_std = training_features.std()
+
+training_features = (training_features - t_mean) / t_std
+validation_features = (validation_features - t_mean) / t_std
+testing_features = (testing_features - t_mean) / t_std
+
+#%% create weight column
+
+weight_column = 'weight_column'
+
+class_weights = compute_class_weight('balanced', np.unique(training_targets), 
+                                     training_targets[target_label[0]])
+class_weights = dict(enumerate(class_weights))
+
+training_features[weight_column] = training_targets.squeeze().map(class_weights)
+validation_features[weight_column] = validation_targets.squeeze().map(class_weights)
+testing_features[weight_column] = testing_targets.squeeze().map(class_weights)
+
+#weight_column = None
+
+if weight_column is not None:
+    feature_labels.append(weight_column)
+
 #%% train using neural network classification model function
 
 # define parameters
 
 learning_rate = 0.001
-steps = 8000
+steps = 7000
 batch_size = 5
-hidden_units = [32]
+hidden_units = [32, 32]
 n_classes = 3
 dropout = 0.2
 batch_norm = False
@@ -165,6 +171,7 @@ if save_model is True:
                          'hidden_units': hidden_units,
                          'n_classes': n_classes,
                          'weight_column': weight_column,
+                         'class_weights': class_weights,
                          'dropout': dropout,
                          'batch_norm': batch_norm,
                          'optimiser': optimiser,
@@ -180,16 +187,13 @@ if save_model is True:
                          'testing_set': testing_set,
                          'testing_features': testing_features,
                          'testing_targets': testing_targets,
-                         'holdout_set': holdout_set,
                          'fibroid_dataframe': fibroid_dataframe,
-                         'concat_dataframe': concat_dataframe,
                          'split_ratio': split_ratio,
                          'timestr': timestr,
-                         'scaled_features': scaled_features,
                          'scaling_type': scaling_type,
+                         't_mean': t_mean,
+                         't_std': t_std,
                          'NPV_bins': NPV_bins,
-                         'features': features,
-                         'targets': targets,
                          'feature_labels': feature_labels,
                          'target_label': target_label}
     
