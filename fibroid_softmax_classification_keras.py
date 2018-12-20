@@ -56,7 +56,8 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda
 
 #%% define feature and target labels
 
-feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
+feature_labels = ['V2_system',
+                  'Subcutaneous_fat_thickness', 'Abdominal_scars',
                   'Fibroid_diameter', 'Fibroid_distance', 
                   'anteverted', 'retroverted', 'vertical']
 
@@ -118,14 +119,14 @@ testing_targets = testing_set[target_label]
 # define parameters
 
 learning_rate = 0.001
-n_epochs = 300
-n_neurons = 25
-n_layers = 2
+n_epochs = 700
+n_neurons = 64
+n_layers = 1
 n_classes = 3
 batch_size = 5
 l1_reg = 0.0
-l2_reg = 0.0
-batch_norm = True
+l2_reg = 0.02
+batch_norm = False
 dropout = None
 
 # build model
@@ -159,7 +160,7 @@ del i
 model.add(k.layers.Dense(n_classes, 
                          activation = 'softmax'))
 
-model.compile(optimizer = k.optimizers.Adam(lr = learning_rate),
+model.compile(optimizer = k.optimizers.Adamax(lr = learning_rate),
               loss = 'sparse_categorical_crossentropy',
               metrics = ['accuracy'])
 
@@ -207,7 +208,7 @@ cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, n
 
 # plot training performance
 
-f1 = plot_softmax_classification_performance(history, cm_training, cm_validation)
+f1 = plot_softmax_classification_performance('keras', history, cm_training, cm_validation)
 
 #%% save model
 

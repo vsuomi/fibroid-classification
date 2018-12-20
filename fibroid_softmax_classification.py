@@ -41,7 +41,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
 
 #%% display NPV histogram
 
@@ -54,9 +54,10 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda
 
 #%% define feature and target labels
 
-feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
+feature_labels = ['V2_system',
+                  'Subcutaneous_fat_thickness', 'Abdominal_scars',
                   'Fibroid_diameter', 'Fibroid_distance', 
-                  'anteverted', 'retroverted']
+                  'anteverted', 'retroverted', 'vertical']
 
 #feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
 #                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
@@ -98,7 +99,7 @@ concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 20
+split_ratio = 40
 training_set, holdout_set = model_selection.train_test_split(concat_dataframe, test_size = split_ratio,
                                               stratify = concat_dataframe[target_label])
 validation_set, testing_set = model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
@@ -119,9 +120,9 @@ testing_targets = testing_set[target_label]
 # define parameters
 
 learning_rate = 0.001
-steps = 3600
+steps = 8000
 batch_size = 5
-hidden_units = [25]
+hidden_units = [32]
 n_classes = 3
 dropout = 0.2
 batch_norm = False
@@ -192,4 +193,4 @@ if save_model is True:
                          'feature_labels': feature_labels,
                          'target_label': target_label}
     
-    save_load_variables(model_dir, variables_to_save, 'save')
+    save_load_variables(model_dir, variables_to_save, 'variables', 'save')

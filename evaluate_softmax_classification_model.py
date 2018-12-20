@@ -42,9 +42,9 @@ from test_neural_network_softmax_classification_model import test_neural_network
 
 #%% load variables
 
-model_dir = 'models\\20181019-093616'
+model_dir = 'models\\20181220-132846'
 variables_to_save = None
-variables = save_load_variables(model_dir, variables_to_save, 'load')
+variables = save_load_variables(model_dir, variables_to_save, 'variables', 'load')
 for key,val in variables.items():
         exec(key + '=val')
                
