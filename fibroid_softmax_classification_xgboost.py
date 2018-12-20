@@ -29,6 +29,7 @@ import numpy as np
 import sklearn as sk
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.utils.class_weight import compute_sample_weight
 import scipy as sp
 import time
 import os
@@ -88,30 +89,17 @@ feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregna
 
 target_label = ['NPV_class']
 
-#%% extract features and targets
-
-features = fibroid_dataframe[feature_labels]
-targets = fibroid_dataframe[target_label]
-
-#%% scale features
-
-scaled_features = pd.DataFrame(sp.stats.mstats.zscore(features),
-                               columns = list(features), 
-                               index = features.index, dtype = float)
-
-#%% combine dataframes
-
-concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
-
 #%% randomise and divive data for cross-validation
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 40
-training_set, holdout_set = train_test_split(concat_dataframe, test_size = split_ratio,
-                                             stratify = concat_dataframe[target_label])
+split_ratio = 20
+training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
+                                             stratify = fibroid_dataframe[target_label])
 validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
                                                stratify = holdout_set[target_label])
+
+del holdout_set
 
 #%% define features and targets
 
@@ -123,9 +111,20 @@ training_targets = training_set[target_label]
 validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
 
+#%% scale features
+
+scaling_type = 'z-score'
+
+t_mean = training_features.mean()
+t_std = training_features.std()
+
+training_features = (training_features - t_mean) / t_std
+validation_features = (validation_features - t_mean) / t_std
+testing_features = (testing_features - t_mean) / t_std
+
 #%% calculate class weights
 
-class_weights = sk.utils.class_weight.compute_sample_weight('balanced', training_targets)
+class_weights = compute_sample_weight('balanced', training_targets)
 
 #%% build and train model
 
@@ -191,9 +190,9 @@ f2 = plot_feature_importance(model, training_features)
 
 #%% save model
 
-model_dir = 'XGBoost models\\%s_TE%d_VE%d' % (timestr, 
-                                              round(training_error), 
-                                              round(validation_error))
+model_dir = 'XGBoost models\\%s_TA%d_VA%d' % (timestr, 
+                                              round(training_accuracy*100), 
+                                              round(validation_accuracy*100))
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)

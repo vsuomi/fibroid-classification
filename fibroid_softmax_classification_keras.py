@@ -29,6 +29,7 @@ import numpy as np
 import sklearn as sk
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
+from sklearn.utils.class_weight import compute_sample_weight, compute_class_weight
 import scipy as sp
 import time
 import os
@@ -73,36 +74,17 @@ feature_labels = ['V2_system',
 
 target_label = ['NPV_class']
 
-#%% extract features and targets
-
-features = fibroid_dataframe[feature_labels]
-targets = fibroid_dataframe[target_label]
-
-#%% scale features
-
-scaled_features = pd.DataFrame(sp.stats.mstats.zscore(features),
-                               columns = list(features), 
-                               index = features.index, dtype = float)
-
-#%% calculate class weights
-
-class_weights = sk.utils.class_weight.compute_class_weight('balanced', np.unique(targets), 
-                                                  targets[target_label[0]])
-class_weights = dict(enumerate(class_weights))
-
-#%% combine dataframes
-
-concat_dataframe = pd.concat([scaled_features, targets], axis = 1)
-
 #%% randomise and divive data for cross-validation
 
 # stratified splitting for unbalanced datasets
 
 split_ratio = 40
-training_set, holdout_set = train_test_split(concat_dataframe, test_size = split_ratio,
-                                             stratify = concat_dataframe[target_label])
+training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
+                                             stratify = fibroid_dataframe[target_label])
 validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
                                                stratify = holdout_set[target_label])
+
+del holdout_set
 
 #%% define features and targets
 
@@ -113,6 +95,23 @@ testing_features = testing_set[feature_labels]
 training_targets = training_set[target_label]
 validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
+
+#%% scale features
+
+scaling_type = 'z-score'
+
+t_mean = training_features.mean()
+t_std = training_features.std()
+
+training_features = (training_features - t_mean) / t_std
+validation_features = (validation_features - t_mean) / t_std
+testing_features = (testing_features - t_mean) / t_std
+
+#%% create weight column
+
+class_weights = compute_class_weight('balanced', np.unique(training_targets), 
+                                     training_targets[target_label[0]])
+class_weights = dict(enumerate(class_weights))
 
 #%% build and train neural network model
 
@@ -236,11 +235,12 @@ variables_to_save = {'learning_rate': learning_rate,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
                      'timestr': timestr,
+                     'scaling_type': scaling_type,
+                     't_mean': t_mean,
+                     't_std': t_std,
                      'history': history,
                      'model_dir': model_dir,
                      'fibroid_dataframe': fibroid_dataframe,
-                     'concat_dataframe': concat_dataframe,
-                     'holdout_set': holdout_set,
                      'training_set': training_set,
                      'training_features': training_features,
                      'training_targets': training_targets,
@@ -250,9 +250,6 @@ variables_to_save = {'learning_rate': learning_rate,
                      'testing_set': testing_set,
                      'testing_features': testing_features,
                      'testing_targets': testing_targets,
-                     'scaled_features': scaled_features,
-                     'features': features,
-                     'targets': targets,
                      'feature_labels': feature_labels,
                      'target_label': target_label}
     
