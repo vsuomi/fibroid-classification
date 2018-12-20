@@ -25,8 +25,8 @@ Created on Tue Sep 18 10:34:21 2018
 from IPython import display
 import pandas as pd
 import numpy as np
-from sklearn import model_selection
-from sklearn.utils.class_weight import compute_sample_weight, compute_class_weight
+from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
 import tensorflow as tf
 import time
 
@@ -76,10 +76,10 @@ target_label = ['NPV_class']
 # stratified splitting for unbalanced datasets
 
 split_ratio = 40
-training_set, holdout_set = model_selection.train_test_split(fibroid_dataframe, test_size = split_ratio,
-                                              stratify = fibroid_dataframe[target_label])
-validation_set, testing_set = model_selection.train_test_split(holdout_set, test_size = int(split_ratio / 2),
-                                              stratify = holdout_set[target_label])
+training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
+                                             stratify = fibroid_dataframe[target_label])
+validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
+                                               stratify = holdout_set[target_label])
 
 del holdout_set
 
