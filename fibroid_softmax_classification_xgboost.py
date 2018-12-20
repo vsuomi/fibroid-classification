@@ -28,7 +28,7 @@ import pandas as pd
 import numpy as np
 import sklearn as sk
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 import scipy as sp
 import time
 import os
@@ -136,7 +136,7 @@ param = {
         'max_depth': 3,
         'silent': 1,
         'alpha': 0.0,
-        'lambda': 0.0,
+        'lambda': 1,
         }
 
 trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
@@ -167,6 +167,11 @@ validation_predictions = model.predict(vld)
 validation_predictions = np.argmax(validation_predictions, axis = 1)
 validation_predictions = pd.DataFrame(validation_predictions, columns = target_label,
                                       index = validation_features.index, dtype = float)
+
+# calculate loss metrics
+
+training_accuracy = accuracy_score(training_targets, training_predictions)
+validation_accuracy = accuracy_score(validation_targets, validation_predictions)
 
 # confusion matrix
 
