@@ -202,3 +202,5 @@ f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf
 f2.savefig(model_dir + '\\' + 'feature_importance.pdf', dpi = 600, format = 'pdf',
                     bbox_inches = 'tight', pad_inches = 0)
 
+model.save_model(model_dir + '\\' + 'xgboost.model')
+
