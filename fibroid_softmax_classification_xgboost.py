@@ -129,12 +129,12 @@ class_weights = compute_sample_weight('balanced', training_targets)
 
 #%% build and train model
 
-num_round = 100
+num_round = 60
 
 evals_result = {}
 
 param = {
-        'objective': 'multi:softprob',
+        'objective': 'multi:softmax',
         'num_class': 3,
         'eta': 0.2,
         'base_score': 0.5,
@@ -142,9 +142,9 @@ param = {
         'min_child_weight': 1,
         'silent': 1,
         'alpha': 0,
-        'lambda': 15,
+        'lambda': 10,
         'gamma': 0,
-        'subsample': 0.1,
+        'subsample': 0.2,
         'colsample_bytree': 1,
         'scale_pos_weight': [1, 1, 1]
         }
@@ -162,12 +162,10 @@ model = xgb.train(param, trn, num_round, [(trn, 'training'), (vld, 'validation')
 # make predictions
 
 training_predictions = model.predict(trn)
-training_predictions = np.argmax(training_predictions, axis = 1)
 training_predictions = pd.DataFrame(training_predictions, columns = target_label,
                                     index = training_features.index, dtype = float)
 
 validation_predictions = model.predict(vld)
-validation_predictions = np.argmax(validation_predictions, axis = 1)
 validation_predictions = pd.DataFrame(validation_predictions, columns = target_label,
                                       index = validation_features.index, dtype = float)
 
