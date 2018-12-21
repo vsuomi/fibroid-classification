@@ -26,7 +26,7 @@ from IPython import display
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.utils.class_weight import compute_class_weight
+from sklearn.utils.class_weight import compute_sample_weight
 import tensorflow as tf
 import time
 
@@ -108,13 +108,9 @@ testing_features = (testing_features - t_mean) / t_std
 
 weight_column = 'weight_column'
 
-class_weights = compute_class_weight('balanced', np.unique(training_targets), 
-                                     training_targets[target_label[0]])
-class_weights = dict(enumerate(class_weights))
-
-training_features[weight_column] = training_targets.squeeze().map(class_weights)
-validation_features[weight_column] = validation_targets.squeeze().map(class_weights)
-testing_features[weight_column] = testing_targets.squeeze().map(class_weights)
+training_features[weight_column] = compute_sample_weight('balanced', training_targets)
+validation_features[weight_column] = np.ones(validation_targets.shape[0])
+testing_features[weight_column] = np.ones(testing_targets.shape[0])
 
 #weight_column = None
 
