@@ -39,10 +39,8 @@ def plot_softmax_classification_performance(model, losses, cm_training, cm_valid
         plt.plot(losses.epoch, np.array(losses.history['val_loss']),
                  label = 'Validation')
     if model == 'xgboost':
-        plt.plot(np.array(losses['training']['merror']),
-                 label = 'Training')
-        plt.plot(np.array(losses['validation']['merror']),
-                 label = 'Validation')
+        plt.plot(np.array(list(losses['training'].values())[0]), label = 'Training')
+        plt.plot(np.array(list(losses['validation'].values())[0]), label = 'Validation')
     plt.grid()
     plt.legend()
     plt.legend()
