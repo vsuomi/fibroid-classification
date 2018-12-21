@@ -45,7 +45,7 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
 
 #%% calculate nan percent for each label
 
@@ -53,14 +53,14 @@ nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['
 
 #%% replace nan values
 
-fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
-fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
-fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
-fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
-fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
-fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
-fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
-fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
+#fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
+#fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
+#fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
+#fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
+#fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
+#fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
+#fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
+#fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
 
 #%% display NPV histogram
 
@@ -73,19 +73,20 @@ fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda
 
 #%% define feature and target labels
 
-#feature_labels = ['Subcutaneous_fat_thickness', 'Abdominal_scars',
-#                  'Fibroid_diameter', 'Fibroid_distance', 
-#                  'anteverted', 'retroverted', 'vertical']
+feature_labels = ['V2_system',
+                  'Subcutaneous_fat_thickness', 'Abdominal_scars',
+                  'Fibroid_diameter', 'Fibroid_distance', 
+                  'anteverted', 'retroverted', 'vertical']
 
-feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
-                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
-                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
-                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-                  'Fibroid_volume', 'ADC']
+#feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
+#                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
+#                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
+#                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
+#                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
+#                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
+#                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
+#                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
+#                  'Fibroid_volume', 'ADC']
 
 target_label = ['NPV_class']
 
@@ -93,7 +94,7 @@ target_label = ['NPV_class']
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 20
+split_ratio = 40
 training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
                                              stratify = fibroid_dataframe[target_label])
 validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
@@ -132,10 +133,16 @@ param = {
         'objective': 'multi:softprob',
         'num_class': 3,
         'eta': 0.2,
+        'base_score': 0.5,
         'max_depth': 3,
+        'min_child_weight': 1,
         'silent': 1,
-        'alpha': 0.0,
-        'lambda': 1,
+        'alpha': 0,
+        'lambda': 10,
+        'gamma': 0,
+        'subsample': 0.1,
+        'colsample_bytree': 1,
+        'scale_pos_weight': [1, 1, 1]
         }
 
 trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
