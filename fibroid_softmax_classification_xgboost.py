@@ -129,23 +129,26 @@ class_weights = compute_sample_weight('balanced', training_targets)
 
 #%% build and train model
 
-num_round = 60
+num_round = 100
 
 evals_result = {}
 
 param = {
         'objective': 'multi:softmax',
+        'eval_metric': 'mlogloss',
         'num_class': 3,
         'eta': 0.2,
-        'base_score': 0.5,
-        'max_depth': 4,
-        'min_child_weight': 1,
         'silent': 1,
+        'subsample': 0.1,
+        'base_score': 0.5,
+        'max_depth': 3,
+        'min_child_weight': 1,
         'alpha': 0,
-        'lambda': 10,
+        'lambda': 5,
         'gamma': 0,
-        'subsample': 0.2,
         'colsample_bytree': 1,
+        'colsample_bylevel': 1,
+        'colsample_bynode': 1,
         'scale_pos_weight': [1, 1, 1]
         }
 
