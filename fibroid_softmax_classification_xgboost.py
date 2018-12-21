@@ -129,16 +129,20 @@ class_weights = compute_sample_weight('balanced', training_targets)
 
 #%% build and train model
 
+num_round = 100
+
+evals_result = {}
+
 param = {
         'objective': 'multi:softprob',
         'num_class': 3,
         'eta': 0.2,
         'base_score': 0.5,
-        'max_depth': 3,
+        'max_depth': 4,
         'min_child_weight': 1,
         'silent': 1,
         'alpha': 0,
-        'lambda': 10,
+        'lambda': 15,
         'gamma': 0,
         'subsample': 0.1,
         'colsample_bytree': 1,
@@ -147,13 +151,6 @@ param = {
 
 trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
 vld = xgb.DMatrix(validation_features, label = validation_targets)
-
-res = xgb.cv(param, trn, nfold = 4, num_boost_round = 2000, early_stopping_rounds = 50,
-             stratified = True, show_stdv = True, metrics = {'merror'}, maximize = False)
-
-num_round = 100
-
-evals_result = {}
 
 timestr = time.strftime('%Y%m%d-%H%M%S')
 
@@ -208,6 +205,32 @@ f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf
                     bbox_inches = 'tight', pad_inches = 0)
 f2.savefig(model_dir + '\\' + 'feature_importance.pdf', dpi = 600, format = 'pdf',
                     bbox_inches = 'tight', pad_inches = 0)
+
+variables_to_save = {'param': param,
+                     'num_round': num_round,
+                     'class_weights': class_weights,
+                     'NPV_bins': NPV_bins,
+                     'split_ratio': split_ratio,
+                     'timestr': timestr,
+                     'scaling_type': scaling_type,
+                     't_mean': t_mean,
+                     't_std': t_std,
+                     'evals_result': evals_result,
+                     'model_dir': model_dir,
+                     'fibroid_dataframe': fibroid_dataframe,
+                     'training_set': training_set,
+                     'training_features': training_features,
+                     'training_targets': training_targets,
+                     'validation_set': validation_set,
+                     'validation_features': validation_features,
+                     'validation_targets': validation_targets,
+                     'testing_set': testing_set,
+                     'testing_features': testing_features,
+                     'testing_targets': testing_targets,
+                     'feature_labels': feature_labels,
+                     'target_label': target_label}
+    
+save_load_variables(model_dir, variables_to_save, 'variables', 'save')
 
 model.save_model(model_dir + '\\' + 'xgboost.model')
 
