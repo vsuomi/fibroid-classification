@@ -26,15 +26,13 @@ Created on Wed Dec 19 13:05:13 2018
 import xgboost as xgb
 import pandas as pd
 import numpy as np
-import sklearn as sk
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import confusion_matrix, accuracy_score
-from sklearn.utils.class_weight import compute_sample_weight
-import scipy as sp
+from sklearn.utils.class_weight import compute_class_weight
 import time
 import os
 
-from plot_softmax_classification_performance import plot_softmax_classification_performance
+from plot_confusion_matrix import plot_confusion_matrix
 from plot_feature_importance import plot_feature_importance
 from save_load_variables import save_load_variables
 
@@ -94,100 +92,100 @@ target_label = ['NPV_class']
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 40
-training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
+split_ratio = 0.2
+training_set, testing_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
                                              stratify = fibroid_dataframe[target_label])
-validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
-                                               stratify = holdout_set[target_label])
-
-del holdout_set
 
 #%% define features and targets
 
 training_features = training_set[feature_labels]
-validation_features = validation_set[feature_labels]
 testing_features = testing_set[feature_labels]
 
 training_targets = training_set[target_label]
-validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
 
 #%% scale features
 
 scaling_type = 'z-score'
 
-t_mean = training_features.mean()
-t_std = training_features.std()
+z_mean = training_features.mean()
+z_std = training_features.std()
 
-training_features = (training_features - t_mean) / t_std
-validation_features = (validation_features - t_mean) / t_std
-testing_features = (testing_features - t_mean) / t_std
+training_features = (training_features - z_mean) / z_std
+testing_features = (testing_features - z_mean) / z_std
 
 #%% calculate class weights
 
-class_weights = compute_sample_weight('balanced', training_targets)
+class_weights = compute_class_weight('balanced', np.unique(training_targets), 
+                                     training_targets[target_label[0]])
 
 #%% build and train model
 
-num_round = 100
+# define parameters for parameter search
 
-evals_result = {}
+parameters =    {
+                'max_depth': [3, 4, 5, 6],
+                'learning_rate': [0.2],
+                'n_estimators': [50, 100, 150, 200],
+                'gamma': [0, 0.1, 0.2],
+                'min_child_weight': [1],
+                'max_delta_step': [0],
+                'subsample': [0.05, 0.1, 0.15, 0.2],
+                'colsample_bytree': [1],
+                'colsample_bylevel': [1],
+                'reg_alpha': [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+                'reg_lambda': [0, 1, 2, 3, 4, 5],
+                'base_score': [0.5]
+                }
 
-param = {
-        'objective': 'multi:softmax',
-        'eval_metric': 'mlogloss',
-        'num_class': 3,
-        'eta': 0.2,
-        'silent': 1,
-        'subsample': 0.1,
-        'base_score': 0.5,
-        'max_depth': 3,
-        'min_child_weight': 1,
-        'alpha': 0,
-        'lambda': 5,
-        'gamma': 0,
-        'colsample_bytree': 1,
-        'colsample_bylevel': 1,
-        'colsample_bynode': 1,
-        'scale_pos_weight': [1, 1, 1]
-        }
+# define model
 
-trn = xgb.DMatrix(training_features, label = training_targets, weight = class_weights)
-vld = xgb.DMatrix(validation_features, label = validation_targets)
+xgb_model = xgb.XGBClassifier(objective = 'multi:softmax', scale_pos_weight = class_weights,
+                              silent = True)
+
+# define parameter search method
+
+#clf = GridSearchCV(xgb_model, parameters, n_jobs = -1, cv = 3)
+clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 1000, n_jobs = -1, cv = 3)
+
+# train model using parameter search
 
 timestr = time.strftime('%Y%m%d-%H%M%S')
+start_time = time.time()
 
-model = xgb.train(param, trn, num_round, [(trn, 'training'), (vld, 'validation')],
-                  evals_result = evals_result, verbose_eval = 10)
+clf.fit(training_features, training_targets.values[:, 0])
+
+end_time = time.time()
+
+# summarise results
+
+print('Best: %f using %s' % (clf.best_score_, clf.best_params_))
+print('Execution time: %.2f s' % (end_time - start_time))
+
+# obtain the best model
+
+model = clf.best_estimator_
 
 #%% evaluate model performance
 
 # make predictions
 
-training_predictions = model.predict(trn)
+training_predictions = model.predict(training_features)
 training_predictions = pd.DataFrame(training_predictions, columns = target_label,
                                     index = training_features.index, dtype = float)
-
-validation_predictions = model.predict(vld)
-validation_predictions = pd.DataFrame(validation_predictions, columns = target_label,
-                                      index = validation_features.index, dtype = float)
 
 # calculate loss metrics
 
 training_accuracy = accuracy_score(training_targets, training_predictions)
-validation_accuracy = accuracy_score(validation_targets, validation_predictions)
 
 # confusion matrix
 
 cm_training = confusion_matrix(training_targets, training_predictions)
 cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
 
-cm_validation = confusion_matrix(validation_targets, validation_predictions)
-cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
-
 # plot training performance
 
-f1 = plot_softmax_classification_performance('xgboost', evals_result, cm_training, cm_validation)
+f1 = plot_confusion_matrix(cm_training)
 
 # plot feature importance
     
@@ -195,9 +193,8 @@ f2 = plot_feature_importance(model, training_features)
 
 #%% save model
 
-model_dir = 'XGBoost models\\%s_TA%d_VA%d' % (timestr, 
-                                              round(training_accuracy*100), 
-                                              round(validation_accuracy*100))
+model_dir = 'XGBoost models\\%s_TA%d' % (timestr, 
+                                         round(training_accuracy*100))
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -207,24 +204,20 @@ f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf
 f2.savefig(model_dir + '\\' + 'feature_importance.pdf', dpi = 600, format = 'pdf',
                     bbox_inches = 'tight', pad_inches = 0)
 
-variables_to_save = {'param': param,
-                     'num_round': num_round,
+variables_to_save = {'parameters': parameters,
+                     'clf': clf,
                      'class_weights': class_weights,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
                      'timestr': timestr,
                      'scaling_type': scaling_type,
-                     't_mean': t_mean,
-                     't_std': t_std,
-                     'evals_result': evals_result,
+                     'z_mean': z_mean,
+                     'z_std': z_std,
                      'model_dir': model_dir,
                      'fibroid_dataframe': fibroid_dataframe,
                      'training_set': training_set,
                      'training_features': training_features,
                      'training_targets': training_targets,
-                     'validation_set': validation_set,
-                     'validation_features': validation_features,
-                     'validation_targets': validation_targets,
                      'testing_set': testing_set,
                      'testing_features': testing_features,
                      'testing_targets': testing_targets,
@@ -234,4 +227,3 @@ variables_to_save = {'param': param,
 save_load_variables(model_dir, variables_to_save, 'variables', 'save')
 
 model.save_model(model_dir + '\\' + 'xgboost.model')
-
