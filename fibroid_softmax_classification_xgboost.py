@@ -124,8 +124,8 @@ class_weights = compute_class_weight('balanced', np.unique(training_targets),
 # define parameters for parameter search
 
 parameters =    {
-                'max_depth': [3, 4, 5, 6],
-                'learning_rate': [0.2],
+                'max_depth': [2, 3, 4, 5, 6],
+                'learning_rate': [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
                 'n_estimators': [50, 100, 150, 200],
                 'gamma': [0, 0.1, 0.2],
                 'min_child_weight': [1],
@@ -140,13 +140,12 @@ parameters =    {
 
 # define model
 
-xgb_model = xgb.XGBClassifier(objective = 'multi:softmax', scale_pos_weight = class_weights,
-                              silent = True)
+xgb_model = xgb.XGBClassifier(scale_pos_weight = class_weights, silent = True)
 
 # define parameter search method
 
-#clf = GridSearchCV(xgb_model, parameters, n_jobs = -1, cv = 3)
-clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 1000, n_jobs = -1, cv = 3)
+#clf = GridSearchCV(xgb_model, parameters, scoring = 'f1_micro', n_jobs = -1, cv = 5)
+clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 1000, scoring = 'f1_micro', n_jobs = -1, cv = 5)
 
 # train model using parameter search
 
