@@ -26,6 +26,7 @@ Created on Wed Dec 19 13:05:13 2018
 import xgboost as xgb
 import pandas as pd
 import numpy as np
+import scipy as sp
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.utils.class_weight import compute_class_weight
@@ -119,22 +120,43 @@ testing_features = (testing_features - z_mean) / z_std
 class_weights = compute_class_weight('balanced', np.unique(training_targets), 
                                      training_targets[target_label[0]])
 
+#%% define random state
+
+random_state = np.random.randint(0, 100)
+
 #%% build and train model
 
 # define parameters for parameter search
 
+#parameters =    {
+#                'max_depth': [2, 3, 4, 5],
+#                'learning_rate': [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
+#                'n_estimators': [50, 100, 150, 200],
+#                'gamma': [0, 0.1, 0.2],
+#                'min_child_weight': [0, 0.2, 0.4, 0.6, 0.8, 1],
+#                'max_delta_step': [0],
+#                'subsample': [0.7, 0.8, 0.9, 1],
+#                'colsample_bytree': [1],
+#                'colsample_bylevel': [1],
+#                'reg_alpha': [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+#                'reg_lambda': [0, 1, 2, 3],
+#                'base_score': [0.5]
+#                }
+
+# define parameter distributions (for randomised search only)
+
 parameters =    {
-                'max_depth': [2, 3, 4, 5, 6],
-                'learning_rate': [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
-                'n_estimators': [50, 100, 150, 200],
-                'gamma': [0, 0.1, 0.2],
-                'min_child_weight': [1],
+                'max_depth': sp.stats.randint(2, 6),
+                'learning_rate': sp.stats.uniform(0.05, 0.25),
+                'n_estimators': sp.stats.randint(50, 201),
+                'gamma': sp.stats.uniform(0, 0.2),
+                'min_child_weight': sp.stats.uniform(0, 1),
                 'max_delta_step': [0],
-                'subsample': [0.05, 0.1, 0.15, 0.2],
+                'subsample': sp.stats.uniform(0.7, 0.3),
                 'colsample_bytree': [1],
                 'colsample_bylevel': [1],
-                'reg_alpha': [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
-                'reg_lambda': [0, 1, 2, 3, 4, 5],
+                'reg_alpha': sp.stats.uniform(0, 1),
+                'reg_lambda': sp.stats.uniform(0, 3),
                 'base_score': [0.5]
                 }
 
@@ -144,8 +166,10 @@ xgb_model = xgb.XGBClassifier(scale_pos_weight = class_weights, silent = True)
 
 # define parameter search method
 
-#clf = GridSearchCV(xgb_model, parameters, scoring = 'f1_micro', n_jobs = -1, cv = 5)
-clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 1000, scoring = 'f1_micro', n_jobs = -1, cv = 5)
+#clf = GridSearchCV(xgb_model, parameters, scoring = 'f1_micro', 
+#                   n_jobs = -1, cv = 5, random_state = random_state)
+clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 3000, scoring = 'f1_micro', 
+                         n_jobs = -1, cv = 5, random_state = random_state)
 
 # train model using parameter search
 
@@ -205,6 +229,7 @@ f2.savefig(model_dir + '\\' + 'feature_importance.pdf', dpi = 600, format = 'pdf
 
 variables_to_save = {'parameters': parameters,
                      'clf': clf,
+                     'random_state': random_state,
                      'class_weights': class_weights,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
