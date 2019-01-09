@@ -100,12 +100,12 @@ testing_targets = testing_set[target_label]
 
 scaling_type = 'z-score'
 
-t_mean = training_features.mean()
-t_std = training_features.std()
+z_mean = training_features.mean()
+z_std = training_features.std()
 
-training_features = (training_features - t_mean) / t_std
-validation_features = (validation_features - t_mean) / t_std
-testing_features = (testing_features - t_mean) / t_std
+training_features = (training_features - z_mean) / z_std
+validation_features = (validation_features - z_mean) / z_std
+testing_features = (testing_features - z_mean) / z_std
 
 #%% create weight column
 
@@ -119,12 +119,12 @@ class_weights = dict(enumerate(class_weights))
 
 learning_rate = 0.001
 n_epochs = 700
-n_neurons = 64
+n_neurons = 25
 n_layers = 1
 n_classes = 3
 batch_size = 5
-l1_reg = 0.0
-l2_reg = 0.02
+l1_reg = 0.01
+l2_reg = 0.03
 batch_norm = False
 dropout = None
 
@@ -236,8 +236,8 @@ variables_to_save = {'learning_rate': learning_rate,
                      'split_ratio': split_ratio,
                      'timestr': timestr,
                      'scaling_type': scaling_type,
-                     't_mean': t_mean,
-                     't_std': t_std,
+                     'z_mean': z_mean,
+                     'z_std': z_std,
                      'history': history,
                      'model_dir': model_dir,
                      'fibroid_dataframe': fibroid_dataframe,

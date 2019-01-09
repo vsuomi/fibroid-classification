@@ -97,12 +97,12 @@ testing_targets = testing_set[target_label]
 
 scaling_type = 'z-score'
 
-t_mean = training_features.mean()
-t_std = training_features.std()
+z_mean = training_features.mean()
+z_std = training_features.std()
 
-training_features = (training_features - t_mean) / t_std
-validation_features = (validation_features - t_mean) / t_std
-testing_features = (testing_features - t_mean) / t_std
+training_features = (training_features - z_mean) / z_std
+validation_features = (validation_features - z_mean) / z_std
+testing_features = (testing_features - z_mean) / z_std
 
 #%% create weight column
 
@@ -124,7 +124,7 @@ if weight_column is not None:
 learning_rate = 0.001
 steps = 7000
 batch_size = 5
-hidden_units = [32, 32]
+hidden_units = [32]
 n_classes = 3
 dropout = 0.2
 batch_norm = False
@@ -187,8 +187,8 @@ if save_model is True:
                          'split_ratio': split_ratio,
                          'timestr': timestr,
                          'scaling_type': scaling_type,
-                         't_mean': t_mean,
-                         't_std': t_std,
+                         'z_mean': z_mean,
+                         'z_std': z_std,
                          'NPV_bins': NPV_bins,
                          'feature_labels': feature_labels,
                          'target_label': target_label}
