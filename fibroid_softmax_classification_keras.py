@@ -24,17 +24,18 @@ Created on Thu Nov  8 13:11:40 2018
 #%% import necessary libraries
 
 import keras as k
+from keras.wrappers.scikit_learn import KerasClassifier
 import pandas as pd
 import numpy as np
-import sklearn as sk
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
-from sklearn.utils.class_weight import compute_sample_weight, compute_class_weight
 import scipy as sp
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
+from sklearn.utils.class_weight import compute_class_weight
 import time
 import os
 
-from plot_softmax_classification_performance import plot_softmax_classification_performance
+from build_keras_model import build_keras_model
+from plot_confusion_matrix import plot_confusion_matrix
 from save_load_variables import save_load_variables
 
 #%% define logging and data display format
@@ -45,6 +46,21 @@ pd.options.display.float_format = '{:.1f}'.format
 #%% read data
 
 fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
+
+#%% calculate nan percent for each label
+
+nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['% of NaN'])
+
+#%% replace nan values
+
+#fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
+#fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
+#fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
+#fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
+#fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
+#fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
+#fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
+#fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
 
 #%% display NPV histogram
 
@@ -70,7 +86,7 @@ feature_labels = ['V2_system',
 #                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
 #                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
 #                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-#                  'Fibroid_volume']
+#                  'Fibroid_volume', 'ADC']
 
 target_label = ['NPV_class']
 
@@ -78,22 +94,16 @@ target_label = ['NPV_class']
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 40
-training_set, holdout_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
+split_ratio = 0.2
+training_set, testing_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
                                              stratify = fibroid_dataframe[target_label])
-validation_set, testing_set = train_test_split(holdout_set, test_size = int(split_ratio / 2),
-                                               stratify = holdout_set[target_label])
-
-del holdout_set
 
 #%% define features and targets
 
 training_features = training_set[feature_labels]
-validation_features = validation_set[feature_labels]
 testing_features = testing_set[feature_labels]
 
 training_targets = training_set[target_label]
-validation_targets = validation_set[target_label]
 testing_targets = testing_set[target_label]
 
 #%% scale features
@@ -104,7 +114,6 @@ z_mean = training_features.mean()
 z_std = training_features.std()
 
 training_features = (training_features - z_mean) / z_std
-validation_features = (validation_features - z_mean) / z_std
 testing_features = (testing_features - z_mean) / z_std
 
 #%% create weight column
@@ -113,124 +122,111 @@ class_weights = compute_class_weight('balanced', np.unique(training_targets),
                                      training_targets[target_label[0]])
 class_weights = dict(enumerate(class_weights))
 
-#%% build and train neural network model
+#%% define random state
 
-# define parameters
+random_state = np.random.randint(0, 1000)
 
-learning_rate = 0.001
-n_epochs = 700
-n_neurons = 25
-n_layers = 1
-n_classes = 3
-batch_size = 5
-l1_reg = 0.01
-l2_reg = 0.03
-batch_norm = False
-dropout = None
+#%% build and train model
 
-# build model
+# define parameters for parameter search
 
-if 'model' in locals():
-    del model
+#parameters =    {
+#                'optimiser': ['adam', 'adamax', 'nadam'],
+#                'learning_rate': [0.0005, 0.001, 0.0015, 0.002],
+#                'epochs': [500, 1000, 1500],
+#                'n_neurons': [20, 40, 60],
+#                'n_layers': [1, 2],
+#                'n_classes': [3],
+#                'batch_size': [1, 3, 5, 7, 9],
+#                'l1_reg': [0, 1e-3, 1e-2, 1e-1, 1, 1e1],
+#                'l2_reg': [0, 1e-3, 1e-2, 1e-1, 1, 1e1],
+#                'batch_norm': [False],
+#                'dropout': [None]
+#                }
 
-model = k.models.Sequential()
+# define parameter distributions (for randomised search only)
 
-model.add(k.layers.Dense(n_neurons, 
-                         input_shape = (training_features.shape[1],),
-                         kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg),
-                         activation = 'relu'))
-if batch_norm is True:
-    model.add(k.layers.BatchNormalization())
-if dropout is not None:
-    model.add(k.layers.Dropout(dropout))
-    
-i = 1   
-while i < n_layers:
-    model.add(k.layers.Dense(n_neurons,
-                             kernel_regularizer = k.regularizers.l1_l2(l1 = l1_reg, l2 = l2_reg),
-                             activation = 'relu'))
-    if batch_norm is True:
-        model.add(k.layers.BatchNormalization())
-    if dropout is not None:
-        model.add(k.layers.Dropout(dropout))
-    i += 1
-del i
+parameters =    {
+                'optimiser': ['adam', 'adamax', 'nadam'],
+                'learning_rate': sp.stats.uniform(0.0005, 0.0015),
+                'epochs': sp.stats.randint(500, 1501),
+                'n_neurons': sp.stats.randint(20, 61),
+                'n_layers': sp.stats.randint(1, 3),
+                'n_classes': [3],
+                'batch_size': sp.stats.randint(1, 11),
+                'l1_reg': sp.stats.reciprocal(1e-3, 1e1),
+                'l2_reg': sp.stats.reciprocal(1e-3, 1e1),
+                'batch_norm': [False],
+                'dropout': [None],
+                'metrics': [['accuracy']],
+                'loss': ['sparse_categorical_crossentropy'],
+                'input_shape': [(training_features.shape[1],)]
+                }
 
-model.add(k.layers.Dense(n_classes, 
-                         activation = 'softmax'))
+# define model
 
-model.compile(optimizer = k.optimizers.Adamax(lr = learning_rate),
-              loss = 'sparse_categorical_crossentropy',
-              metrics = ['accuracy'])
+keras_model = KerasClassifier(build_fn = build_keras_model, verbose = 0)
 
-model.summary()
+# define parameter search method
 
-# train model
+#clf = GridSearchCV(keras_model, parameters, scoring = 'f1_micro', n_jobs = -1, cv = 5)
+clf = RandomizedSearchCV(keras_model, parameters, n_iter = 10, scoring = 'f1_micro', 
+                         n_jobs = 1, cv = 5, random_state = random_state)
 
-class PrintDot(k.callbacks.Callback):
-  def on_epoch_end(self, epoch, logs):
-    if epoch % 100 == 0: print('')
-    print('.', end='')
-    
+# train model using parameter search
+
 timestr = time.strftime('%Y%m%d-%H%M%S')
+start_time = time.time()
 
-history = model.fit(training_features, training_targets, verbose = 0, callbacks = [PrintDot()],
-                    batch_size = batch_size, epochs = n_epochs, class_weight = class_weights,
-                    validation_data = (validation_features, validation_targets))
+clf.fit(training_features, training_targets.values[:, 0], class_weight = class_weights)
+
+end_time = time.time()
+
+# summarise results
+
+print('Best score %f using parameters: %s' % (clf.best_score_, clf.best_params_))
+print('Execution time: %.2f s' % (end_time - start_time))
+
+# obtain the best model
+
+model = clf.best_estimator_
 
 #%% evaluate model performance
-
-# calculate loss metrics
-
-training_loss, training_accuracy = model.evaluate(training_features, training_targets)
-validation_loss, validation_accuracy = model.evaluate(validation_features, validation_targets)
 
 # make predictions
 
 training_predictions = model.predict(training_features)
-training_predictions = np.argmax(training_predictions, axis = 1)
 training_predictions = pd.DataFrame(training_predictions, columns = target_label,
                                     index = training_features.index, dtype = float)
 
-validation_predictions = model.predict(validation_features)
-validation_predictions = np.argmax(validation_predictions, axis = 1)
-validation_predictions = pd.DataFrame(validation_predictions, columns = target_label,
-                                      index = validation_features.index, dtype = float)
+# calculate loss metrics
+
+training_accuracy = accuracy_score(training_targets, training_predictions)
 
 # confusion matrix
 
 cm_training = confusion_matrix(training_targets, training_predictions)
 cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
 
-cm_validation = confusion_matrix(validation_targets, validation_predictions)
-cm_validation = cm_validation.astype('float') / cm_validation.sum(axis = 1)[:, np.newaxis]
-
 # plot training performance
 
-f1 = plot_softmax_classification_performance('keras', history, cm_training, cm_validation)
+f1 = plot_confusion_matrix(cm_training)
 
 #%% save model
 
-model_dir = 'Keras models\\%s_TA%d_VA%d' % (timestr, 
-                                            round(training_accuracy*100), 
-                                            round(validation_accuracy*100))
+model_dir = 'Keras models\\%s_TA%d' % (timestr, 
+                                       round(training_accuracy*100))
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
 f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf',
-                    bbox_inches = 'tight', pad_inches = 0)
+           bbox_inches = 'tight', pad_inches = 0)
 
-variables_to_save = {'learning_rate': learning_rate,
-                     'n_epochs': n_epochs,
-                     'n_neurons': n_neurons,
-                     'n_classes': n_classes,
-                     'n_layers': n_layers,
-                     'batch_size': batch_size,
-                     'l1_reg': l1_reg,
-                     'l2_reg': l2_reg,
-                     'batch_norm': batch_norm,
-                     'dropout': dropout,
+variables_to_save = {'nan_percent': nan_percent,
+                     'parameters': parameters,
+                     'clf': clf,
+                     'random_state': random_state,
                      'class_weights': class_weights,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
@@ -238,15 +234,11 @@ variables_to_save = {'learning_rate': learning_rate,
                      'scaling_type': scaling_type,
                      'z_mean': z_mean,
                      'z_std': z_std,
-                     'history': history,
                      'model_dir': model_dir,
                      'fibroid_dataframe': fibroid_dataframe,
                      'training_set': training_set,
                      'training_features': training_features,
                      'training_targets': training_targets,
-                     'validation_set': validation_set,
-                     'validation_features': validation_features,
-                     'validation_targets': validation_targets,
                      'testing_set': testing_set,
                      'testing_features': testing_features,
                      'testing_targets': testing_targets,
