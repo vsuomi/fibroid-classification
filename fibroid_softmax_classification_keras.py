@@ -169,9 +169,10 @@ keras_model = KerasClassifier(build_fn = build_keras_model, verbose = 0)
 
 # define parameter search method
 
-#clf = GridSearchCV(keras_model, parameters, scoring = 'f1_micro', n_jobs = -1, cv = 5)
-clf = RandomizedSearchCV(keras_model, parameters, n_iter = 10, scoring = 'f1_micro', 
-                         n_jobs = 1, cv = 5, random_state = random_state)
+#clf = GridSearchCV(keras_model, parameters, scoring = scoring = ['f1_micro', 'f1_weighted', 'neg_log_loss'],
+#                   n_jobs = 1, cv = 5, refit = 'f1_weighted')
+clf = RandomizedSearchCV(keras_model, parameters, n_iter = 100, scoring = ['f1_micro', 'f1_weighted', 'neg_log_loss'], 
+                         n_jobs = 1, cv = 5, random_state = random_state, refit = 'f1_weighted')
 
 # train model using parameter search
 

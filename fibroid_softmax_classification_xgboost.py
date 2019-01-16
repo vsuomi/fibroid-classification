@@ -24,6 +24,7 @@ Created on Wed Dec 19 13:05:13 2018
 #%% import necessary libraries
 
 import xgboost as xgb
+from xgboost import XGBClassifier
 import pandas as pd
 import numpy as np
 import scipy as sp
@@ -119,6 +120,7 @@ testing_features = (testing_features - z_mean) / z_std
 
 class_weights = compute_class_weight('balanced', np.unique(training_targets), 
                                      training_targets[target_label[0]])
+class_weights = list(class_weights)
 
 #%% define random state
 
@@ -129,17 +131,17 @@ random_state = np.random.randint(0, 1000)
 # define parameters for parameter search
 
 #parameters =    {
-#                'max_depth': [2, 3, 4, 5],
-#                'learning_rate': [0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
-#                'n_estimators': [50, 100, 150, 200],
+#                'max_depth': [3, 4, 5],
+#                'learning_rate': [0.1, 0.2, 0.3],
+#                'n_estimators': [50, 100, 150],
 #                'gamma': [0, 0.1, 0.2],
-#                'min_child_weight': [0, 0.2, 0.4, 0.6, 0.8, 1],
+#                'min_child_weight': [0, 0.5, 1],
 #                'max_delta_step': [0],
 #                'subsample': [0.7, 0.8, 0.9, 1],
-#                'colsample_bytree': [0.5, 0.6, 0.7, 0.8, 0.9, 1],
+#                'colsample_bytree': [0.6, 0.8, 1],
 #                'colsample_bylevel': [1],
-#                'reg_alpha': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
-#                'reg_lambda': [0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2],
+#                'reg_alpha': [0, 1e-2, 1, 1e1],
+#                'reg_lambda': [0, 1e-2, 1, 1e1],
 #                'base_score': [0.5]
 #                }
 
@@ -162,14 +164,15 @@ parameters =    {
 
 # define model
 
-xgb_model = xgb.XGBClassifier(scale_pos_weight = class_weights, silent = True,
-                              random_state = random_state)
+xgb_model = XGBClassifier(scale_pos_weight = class_weights, silent = True,
+                          random_state = random_state)
 
 # define parameter search method
 
-#clf = GridSearchCV(xgb_model, parameters, scoring = 'f1_micro', n_jobs = -1, cv = 5)
-clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 3000, scoring = 'f1_micro', 
-                         n_jobs = -1, cv = 5, random_state = random_state)
+#clf = GridSearchCV(xgb_model, parameters, scoring = ['f1_micro', 'f1_weighted', 'neg_log_loss'], 
+#                   n_jobs = -1, cv = 5, refit = 'f1_weighted')
+clf = RandomizedSearchCV(xgb_model, parameters, n_iter = 1000, scoring = ['f1_micro', 'f1_weighted', 'neg_log_loss'], 
+                         n_jobs = -1, cv = 5, random_state = random_state, refit = 'f1_weighted')
 
 # train model using parameter search
 
@@ -223,11 +226,12 @@ if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
 f1.savefig(model_dir + '\\' + 'evaluation_metrics.pdf', dpi = 600, format = 'pdf',
-                    bbox_inches = 'tight', pad_inches = 0)
+           bbox_inches = 'tight', pad_inches = 0)
 f2.savefig(model_dir + '\\' + 'feature_importance.pdf', dpi = 600, format = 'pdf',
-                    bbox_inches = 'tight', pad_inches = 0)
+           bbox_inches = 'tight', pad_inches = 0)
 
-variables_to_save = {'parameters': parameters,
+variables_to_save = {'nan_percent': nan_percent,
+                     'parameters': parameters,
                      'clf': clf,
                      'random_state': random_state,
                      'class_weights': class_weights,
