@@ -59,7 +59,7 @@ class EstimatorSelectionHelper:
                  'mean_score': np.mean(scores),
                  'std_score': np.std(scores),
             }
-            return pd.Series({**params,**d})
+            return pd.Series({**params, **d})
 
         rows = []
         for k in self.grid_searches:
@@ -69,10 +69,10 @@ class EstimatorSelectionHelper:
             for i in range(self.grid_searches[k].cv):
                 key = "split{}_test_score".format(i)
                 r = self.grid_searches[k].cv_results_[key]        
-                scores.append(r.reshape(len(params),1))
+                scores.append(r.reshape(len(params), 1))
 
             all_scores = np.hstack(scores)
-            for p, s in zip(params,all_scores):
+            for p, s in zip(params, all_scores):
                 rows.append((row(k, s, p)))
 
         df = pd.concat(rows, axis = 1).T.sort_values([sort_by], ascending = False)

@@ -110,11 +110,13 @@ testing_targets = testing_set[target_label]
 
 scaling_type = 'z-score'
 
-z_mean = training_features.mean()
-z_std = training_features.std()
+if scaling_type == 'z-score':
 
-training_features = (training_features - z_mean) / z_std
-testing_features = (testing_features - z_mean) / z_std
+    z_mean = training_features.mean()
+    z_std = training_features.std()
+    
+    training_features = (training_features - z_mean) / z_std
+    testing_features = (testing_features - z_mean) / z_std
 
 #%% calculate class weights
 
@@ -141,30 +143,49 @@ models =    {
 # define model parameters for parameter search
 
 param_extra_trees =     {
-                        'n_estimators': [16, 32]
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'min_samples_split': [2, 4],
+                        'max_features': ['sqrt', None],
+                        'random_state': [random_state],
+                        'class_weight': [class_weights]
                         }
 
 param_random_forest =   {
-                        'n_estimators': [16, 32]
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'min_samples_split': [2, 4],
+                        'max_features': ['sqrt', None],
+                        'random_state': [random_state],
+                        'class_weight': [class_weights]
                         }
 
 param_adaboost =        {
-                        'n_estimators': [16, 32]
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'learning_rate': [0.1, 0.5, 1, 5, 10],
+                        'random_state': [random_state]
                         }
 
 param_gradient_boost =  {
-                        'n_estimators': [16, 32]
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'subsample': [0.8, 0.9, 1],
+                        'min_samples_split': [2, 4],
+                        'max_features': ['sqrt', None],
+                        'random_state': [random_state]
                         }
 
 param_svc =             [
                         {
                         'kernel': ['rbf'], 
-                        'C': [1, 10], 
-                        'gamma': [0.001, 0.0001]
+                        'C': [0.01, 0.1, 1, 10, 100],
+                        'gamma': ['auto', 'scale'],
+                        'random_state': [random_state],
+                        'class_weight': [class_weights]
                         },
                         {
                         'kernel': ['linear'], 
-                        'C': [1, 10]    
+                        'C': [0.01, 0.1, 1, 10, 100],
+                        'random_state': [random_state],
+                        'class_weight': [class_weights]
                         }
                         ]
 
@@ -180,10 +201,21 @@ parameters =    {
 
 #%% perform cross-validation and parameter search
 
+scoring = 'f1_micro'
+cv = 10
+
 clf = EstimatorSelectionHelper(models, parameters)
-clf.fit(training_features, training_targets, scoring = 'f1_micro', 
-        n_jobs = -1, cv = 5, refit = True)
+
+timestr = time.strftime('%Y%m%d-%H%M%S')
+start_time = time.time()
+
+clf.fit(training_features, training_targets, scoring = scoring, 
+        n_jobs = -1, cv = cv, refit = True)
+
+end_time = time.time()
+
+print('Execution time: %.2f s' % (end_time - start_time))
 
 #%% display score summary
 
-clf_scores = clf.score_summary(sort_by = 'max_score')
+clf_scores = clf.score_summary(sort_by = 'mean_score')
