@@ -32,6 +32,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from logitboost import LogitBoost
+from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 import time
@@ -139,7 +140,8 @@ models =    {
             'AdaBoostClassifier': AdaBoostClassifier(),
             'GradientBoostingClassifier': GradientBoostingClassifier(),
             'SVC': SVC(),
-            'LogitBoost': LogitBoost()
+            'LogitBoost': LogitBoost(),
+            'XGBClassifier': XGBClassifier()
             }
 
 # define model parameters for parameter search
@@ -196,6 +198,16 @@ param_logitboost  =     {
                         'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
                         'random_state': [random_state]
                         }
+
+param_xgb =             {
+                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'subsample': [0.8, 0.9, 1],
+                        'reg_alpha': [0, 1, 10],
+                        'reg_lambda': [0, 1, 10],
+                        'random_state': [random_state]
+                        }
+
 # combine parameters
 
 parameters =    {
@@ -204,7 +216,8 @@ parameters =    {
                 'AdaBoostClassifier': param_adaboost,
                 'GradientBoostingClassifier': param_gradient_boost,
                 'SVC': param_svc,
-                'LogitBoost': param_logitboost
+                'LogitBoost': param_logitboost,
+                'XGBClassifier': param_xgb
                 }
 
 #%% perform cross-validation and parameter search
@@ -218,7 +231,7 @@ timestr = time.strftime('%Y%m%d-%H%M%S')
 start_time = time.time()
 
 clf.fit(training_features, training_targets, scoring = scoring, 
-        n_jobs = -1, cv = cv, refit = True)
+        n_jobs = -1, cv = cv, refit = False)
 
 end_time = time.time()
 
