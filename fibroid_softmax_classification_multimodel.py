@@ -31,6 +31,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
+from logitboost import LogitBoost
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 import time
@@ -137,7 +138,8 @@ models =    {
             'RandomForestClassifier': RandomForestClassifier(),
             'AdaBoostClassifier': AdaBoostClassifier(),
             'GradientBoostingClassifier': GradientBoostingClassifier(),
-            'SVC': SVC()
+            'SVC': SVC(),
+            'LogitBoost': LogitBoost()
             }
 
 # define model parameters for parameter search
@@ -189,6 +191,11 @@ param_svc =             [
                         }
                         ]
 
+param_logitboost  =     {
+                        'n_estimators': [10, 50, 100, 200, 300],
+                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'random_state': [random_state]
+                        }
 # combine parameters
 
 parameters =    {
@@ -196,7 +203,8 @@ parameters =    {
                 'RandomForestClassifier': param_random_forest,
                 'AdaBoostClassifier': param_adaboost,
                 'GradientBoostingClassifier': param_gradient_boost,
-                'SVC': param_svc
+                'SVC': param_svc,
+                'LogitBoost': param_logitboost
                 }
 
 #%% perform cross-validation and parameter search
