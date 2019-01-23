@@ -32,6 +32,7 @@ from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
 from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import f1_score
 
 from skfeature.function.similarity_based import fisher_score
 from skfeature.function.similarity_based import reliefF
@@ -226,7 +227,7 @@ for scorer, ranker, name in zip(scorers, rankers, names):
     elif name in ('f_classif', 'chi2', 'mutual_info_classif'):
         
         selector = SelectKBest(scorer, k = k)
-        selector.fit(training_features, training_targets)
+        selector.fit(training_features.values, training_targets.values[:, 0])
         k_features[name] = list(training_features.columns[selector.get_support(indices = True)])
     
     else:
@@ -266,7 +267,7 @@ svc_model = SVC(probability = True, random_state = random_state, class_weight = 
 # define parameter search method
 
 clf = GridSearchCV(svc_model, parameters, n_jobs = -1, cv = cv, 
-                   scoring = scoring, refit = False)
+                   scoring = scoring, refit = True)
 
 # train model using parameter search
     
@@ -282,13 +283,19 @@ for n in n_features:
     
         clf.fit(training_features[k_features[name][0:n]].values, training_targets.values[:, 0])
         
+        model = clf.best_estimator_
+        testing_predictions = model.predict(testing_features[k_features[name][0:n]].values)
+        test_score = f1_score(testing_targets.values[:, 0], testing_predictions,
+                              average = 'micro')
+        
         df = pd.DataFrame(clf.best_params_, index = [i])
-        df['best_score'] = clf.best_score_
+        df['validation_score'] = clf.best_score_
+        df['test_score'] = test_score
         df['method'] = name
         df['n_features'] = n
         clf_results = clf_results.append(df)
         
-        del df
+        del df, model, testing_predictions, test_score
         
         i += 1
 
@@ -304,20 +311,29 @@ print('Execution time: %.2f s' % (end_time - start_time))
 
 # collect best scores for each n features
 
-heatmap = []
+heatmap_validation = []
+heatmap_test = []
 
 for n in n_features:
     
-    heatmap.append(list(clf_results.loc[clf_results['n_features'] == n]['best_score']))
+    heatmap_validation.append(list(clf_results.loc[clf_results['n_features'] == n]['validation_score']))
+    heatmap_test.append(list(clf_results.loc[clf_results['n_features'] == n]['test_score']))
     
 del n
     
-heatmap = pd.DataFrame(heatmap, index = n_features, columns = names).T
+heatmap_validation = pd.DataFrame(heatmap_validation, index = n_features, columns = names).T
+heatmap_test = pd.DataFrame(heatmap_test, index = n_features, columns = names).T
 
 # plot heatmap
 
 f1 = plt.figure()
-ax = sns.heatmap(heatmap, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_validation, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+#ax.set_aspect(1)
+plt.ylabel('Feature selection method')
+plt.xlabel('Number of features')
+
+f2 = plt.figure()
+ax = sns.heatmap(heatmap_test, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
@@ -330,7 +346,9 @@ model_dir = 'Feature selection\\%s_%s_NF%d_NM%d' % (timestr, scoring,
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
-f1.savefig(model_dir + '\\' + 'heatmap.pdf', dpi = 600, format = 'pdf',
+f1.savefig(model_dir + '\\' + 'heatmap_validation.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
@@ -343,7 +361,8 @@ variables_to_save = {'nan_percent': nan_percent,
                      'k_features': k_features,
                      'clf': clf,
                      'clf_results': clf_results,
-                     'heatmap': heatmap,
+                     'heatmap_validation': heatmap_validation,
+                     'heatmap_test': heatmap_test,
                      'start_time': start_time,
                      'end_time': end_time,
                      'random_state': random_state,
