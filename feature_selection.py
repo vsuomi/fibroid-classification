@@ -61,34 +61,24 @@ random_state = np.random.randint(0, 1000)
 
 pd.options.display.max_rows = 10
 pd.options.display.float_format = '{:.1f}'.format
+pd.options.mode.chained_assignment = None                                       # disable imputation warnings
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
+dataframe = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
 
 #%% calculate nan percent for each label
 
-nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['% of NaN'])
-
-#%% replace nan values
-
-fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
-fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
-fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
-fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
-fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
-fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
-fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
-fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
+nan_percent = pd.DataFrame(dataframe.isnull().mean() * 100, columns = ['% of NaN'])
 
 #%% display NPV histogram
 
-fibroid_dataframe['NPV_percent'].hist(bins = 20)
+dataframe['NPV_percent'].hist(bins = 20)
 
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
-fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+dataframe['NPV_class'] = dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
 #%% define feature and target labels
 
@@ -109,9 +99,34 @@ target_label = ['NPV_class']
 # stratified splitting for unbalanced datasets
 
 split_ratio = 0.2
-training_set, testing_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
-                                             stratify = fibroid_dataframe[target_label],
+training_set, testing_set = train_test_split(dataframe, test_size = split_ratio,
+                                             stratify = dataframe[target_label],
                                              random_state = random_state)
+
+#%% impute data
+
+impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
+                 'infertility', 'ADC']
+
+impute_values = {}
+
+for label in impute_labels:
+    
+    if label in {'Height', 'ADC'}:
+        
+        impute_values[label] = training_set[label].mean()
+        
+        training_set[label] = training_set[label].fillna(impute_values[label])
+        testing_set[label] = testing_set[label].fillna(impute_values[label])
+        
+    else:
+        
+        impute_values[label] = training_set[label].mode()[0]
+        
+        training_set[label] = training_set[label].fillna(impute_values[label])
+        testing_set[label] = testing_set[label].fillna(impute_values[label])
+        
+del label
 
 #%% define features and targets
 
@@ -124,16 +139,8 @@ testing_targets = testing_set[target_label]
 #%% scale features
 
 scaling_type = 'log'
-
-if scaling_type == 'z-score':
-
-    z_mean = training_features.mean()
-    z_std = training_features.std()
-    
-    training_features = (training_features - z_mean) / z_std
-    testing_features = (testing_features - z_mean) / z_std
-    
-elif scaling_type == 'log':
+   
+if scaling_type == 'log':
     
     training_features = np.log1p(training_features)
     testing_features = np.log1p(testing_features)
@@ -353,6 +360,8 @@ f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
 
 variables_to_save = {'nan_percent': nan_percent,
                      'parameters': parameters,
+                     'impute_labels': impute_labels,
+                     'impute_values': impute_values,
                      'k': k,
                      'cv': cv,
                      'scoring': scoring,
@@ -372,7 +381,7 @@ variables_to_save = {'nan_percent': nan_percent,
                      'timestr': timestr,
                      'scaling_type': scaling_type,
                      'model_dir': model_dir,
-                     'fibroid_dataframe': fibroid_dataframe,
+                     'dataframe': dataframe,
                      'training_set': training_set,
                      'training_features': training_features,
                      'training_targets': training_targets,
