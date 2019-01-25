@@ -53,10 +53,6 @@ from skfeature.function.information_theoretical_based import MIFS
 
 from save_load_variables import save_load_variables
 
-#%% define random state
-
-random_state = np.random.randint(0, 1000)
-
 #%% define logging and data display format
 
 pd.options.display.max_rows = 10
@@ -90,93 +86,45 @@ feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'Gravidity', 'Pari
                   'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
                   'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
                   'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-                  'ADC', 'Fibroid_volume']
+                  'Fibroid_volume']
 
 target_label = ['NPV_class']
 
-#%% randomise and divive data for cross-validation
+#%% define parameters for iteration
 
-# stratified splitting for unbalanced datasets
+# define number of iterations
 
-split_ratio = 0.2
-training_set, testing_set = train_test_split(dataframe, test_size = split_ratio,
-                                             stratify = dataframe[target_label],
-                                             random_state = random_state)
+n_iterations = 2
 
-#%% impute data
-
-impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
-                 'infertility', 'ADC']
-
-impute_values = {}
-
-for label in impute_labels:
-    
-    if label in {'Height', 'ADC'}:
-        
-        impute_values[label] = training_set[label].mean()
-        
-        training_set[label] = training_set[label].fillna(impute_values[label])
-        testing_set[label] = testing_set[label].fillna(impute_values[label])
-        
-    else:
-        
-        impute_values[label] = training_set[label].mode()[0]
-        
-        training_set[label] = training_set[label].fillna(impute_values[label])
-        testing_set[label] = testing_set[label].fillna(impute_values[label])
-        
-del label
-
-#%% define features and targets
-
-training_features = training_set[feature_labels]
-testing_features = testing_set[feature_labels]
-
-training_targets = training_set[target_label]
-testing_targets = testing_set[target_label]
-
-#%% scale features
-
-scaling_type = 'log'
-   
-if scaling_type == 'log':
-    
-    training_features = np.log1p(training_features)
-    testing_features = np.log1p(testing_features)
-
-#%% calculate class weights
-
-class_weights = compute_class_weight('balanced', np.unique(training_targets), 
-                                     training_targets[target_label[0]])
-class_weights = dict(enumerate(class_weights))
-
-#%% find best features
-
-# number of features
+# define maximum number of features
 
 k = 20
 
-# define scorer names
+# define split ratio for training and testing sets
 
-names = ['fisher_score', 
-         'reliefF', 
-         'trace_ratio',
-         'gini_index', 
-         'chi_square', 
-         'f_score',
-         'disr', 
-         'cmim',
-         'icap',
-         'jmi',
-         'cife',
-         'mim',
-         'mrmr',
-         'mifs',
-         'f_classif',
-         'chi2',
-         'mutual_info_classif'
-         ]
+split_ratio = 0.2
+
+# define scaling type (log or None)
+
+scaling_type = 'log'
+
+# define scorer methods
+
+methods =   ['fisher_score', 
+             'reliefF', 
+             'trace_ratio',
+             'gini_index', 
+             'chi_square', 
+             'f_score',
+             'disr', 
+             'cmim',
+             'icap',
+             'jmi',
+             'cife',
+             'mim',
+             'mrmr',
+             'mifs'
+             ]
 
 # define scorer functions
 
@@ -193,13 +141,10 @@ scorers = [fisher_score.fisher_score,
            CIFE.cife,
            MIM.mim,
            MRMR.mrmr,
-           MIFS.mifs,
-           f_classif,
-           chi2,
-           mutual_info_classif
+           MIFS.mifs
            ]
 
-# define scorer rankers (sk-feature only)
+# define scorer rankers (for scikit-feature only)
 
 rankers = [fisher_score.feature_ranking, 
            reliefF.feature_ranking,
@@ -214,38 +159,8 @@ rankers = [fisher_score.feature_ranking,
            None,
            None, 
            None,
-           None,
-           None,
-           None,
            None
            ]
-
-# find k best features for each scorer
-
-k_features = pd.DataFrame(index = range(0, k), columns = names)
-
-for scorer, ranker, name in zip(scorers, rankers, names):
-    
-    if name in ('disr', 'cmim', 'icap', 'jmi', 'cife', 'mim', 'mrmr', 'mifs', 'trace_ratio'):
-        
-        indices, _, _ = scorer(training_features.values, training_targets.values[:, 0], n_selected_features = k)
-        k_features[name] = pd.DataFrame(training_features.columns.values[indices], columns = [name])
-        
-    elif name in ('f_classif', 'chi2', 'mutual_info_classif'):
-        
-        selector = SelectKBest(scorer, k = k)
-        selector.fit(training_features.values, training_targets.values[:, 0])
-        k_features[name] = list(training_features.columns[selector.get_support(indices = True)])
-    
-    else:
-        
-        scores = scorer(training_features.values, training_targets.values[:, 0])
-        indices = ranker(scores)
-        k_features[name] = pd.DataFrame(training_features.columns.values[indices[0:k]], columns = [name])
-        
-del scorer, ranker, name, selector, scores, indices
-
-#%% find best number of features for each scorer
 
 # define fitting parameters
 
@@ -255,58 +170,165 @@ n_features = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # define parameters for parameter search
 
-parameters =    [
+grid_param =    [
                 {
                 'kernel': ['rbf'], 
-                'C': [0.001, 0.01, 0.1, 1, 10, 100],
+                'C': [0.01, 0.1, 1, 10, 100, 1000],
                 'gamma': ['auto', 'scale']
                 },
                 {
                 'kernel': ['linear'], 
-                'C': [0.001, 0.01, 0.1, 1, 10, 100]
+                'C': [0.01, 0.1, 1, 10, 100, 1000]
                 }
                 ]
 
-# define model
+# define data imputation values
 
-svc_model = SVC(probability = True, random_state = random_state, class_weight = class_weights)
+impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
+                 'infertility']
 
-# define parameter search method
-
-clf = GridSearchCV(svc_model, parameters, n_jobs = -1, cv = cv, 
-                   scoring = scoring, refit = True)
-
-# train model using parameter search
-    
-timestr = time.strftime('%Y%m%d-%H%M%S')
-start_time = time.time()
+# empty dataframe for storing results
 
 clf_results = pd.DataFrame()
 
-i = 0
+#%% start the iteration
 
-for n in n_features:
-    for name in names:
+timestr = time.strftime('%Y%m%d-%H%M%S')
+start_time = time.time()
+
+for iteration in range(0, n_iterations):
     
-        clf.fit(training_features[k_features[name][0:n]].values, training_targets.values[:, 0])
-        
-        model = clf.best_estimator_
-        testing_predictions = model.predict(testing_features[k_features[name][0:n]].values)
-        test_score = f1_score(testing_targets.values[:, 0], testing_predictions,
-                              average = 'micro')
-        
-        df = pd.DataFrame(clf.best_params_, index = [i])
-        df['validation_score'] = clf.best_score_
-        df['test_score'] = test_score
-        df['method'] = name
-        df['n_features'] = n
-        clf_results = clf_results.append(df)
-        
-        del df, model, testing_predictions, test_score
-        
-        i += 1
+    # define random state
 
-del n, i, name
+    random_state = np.random.randint(0, 10000)
+    
+    # print progress
+    
+    print('Iteration %d with random state %d at %.1f s' % (iteration, random_state, 
+                                                           (time.time() - start_time)))
+    
+    # randomise and divive data for cross-validation
+    
+    training_set, testing_set = train_test_split(dataframe, test_size = split_ratio,
+                                                 stratify = dataframe[target_label],
+                                                 random_state = random_state)
+    
+    impute_values = {}
+    
+    for label in impute_labels:
+        
+        if label in {'Height'}:
+            
+            impute_values[label] = training_set[label].mean()
+            
+            training_set[label] = training_set[label].fillna(impute_values[label])
+            testing_set[label] = testing_set[label].fillna(impute_values[label])
+            
+        else:
+            
+            impute_values[label] = training_set[label].mode()[0]
+            
+            training_set[label] = training_set[label].fillna(impute_values[label])
+            testing_set[label] = testing_set[label].fillna(impute_values[label])
+            
+    del label
+    
+    # define features and targets
+    
+    training_features = training_set[feature_labels]
+    testing_features = testing_set[feature_labels]
+    
+    training_targets = training_set[target_label]
+    testing_targets = testing_set[target_label]
+    
+    # scale features
+       
+    if scaling_type == 'log':
+        
+        training_features = np.log1p(training_features)
+        testing_features = np.log1p(testing_features)
+    
+    # calculate class weights
+    
+    class_weights = compute_class_weight('balanced', np.unique(training_targets), 
+                                         training_targets[target_label[0]])
+    class_weights = dict(enumerate(class_weights))
+    
+    # find k best features for each method
+    
+    k_features = pd.DataFrame(index = range(0, k), columns = methods)
+    
+    for scorer, ranker, method in zip(scorers, rankers, methods):
+        
+        if method in ('disr', 'cmim', 'icap', 'jmi', 'cife', 'mim', 'mrmr', 'mifs', 'trace_ratio'):
+            
+            indices, _, _ = scorer(training_features.values, training_targets.values[:, 0], n_selected_features = k)
+            k_features[method] = pd.DataFrame(training_features.columns.values[indices], columns = [method])
+            
+            del indices
+            
+        elif method in ('f_classif', 'chi2', 'mutual_info_classif'):
+            
+            selector = SelectKBest(scorer, k = k)
+            selector.fit(training_features.values, training_targets.values[:, 0])
+            k_features[method] = list(training_features.columns[selector.get_support(indices = True)])
+            
+            del selector
+        
+        else:
+            
+            scores = scorer(training_features.values, training_targets.values[:, 0])
+            indices = ranker(scores)
+            k_features[method] = pd.DataFrame(training_features.columns.values[indices[0:k]], columns = [method])
+            
+            del scores, indices
+            
+    del scorer, ranker, method
+    
+    # define classification model
+    
+    clf_model = SVC(probability = True, random_state = random_state, class_weight = class_weights)
+    
+    # define parameter search method
+    
+    clf_grid = GridSearchCV(clf_model, grid_param, n_jobs = -1, cv = cv, 
+                            scoring = scoring, refit = True, iid = False)
+    
+    # train model using parameter search
+
+    for n in n_features:
+        for method in methods:
+            
+            # fit parameter search
+        
+            clf_fit = clf_grid.fit(training_features[k_features[method][0:n]].values, training_targets.values[:, 0])
+            
+            # obtain best results
+            
+            best_model = clf_fit.best_estimator_
+            testing_predictions = best_model.predict(testing_features[k_features[method][0:n]].values)
+            test_score = f1_score(testing_targets.values[:, 0], testing_predictions,
+                                  average = 'micro')
+            
+            # save results
+            
+            df = pd.DataFrame(clf_fit.best_params_, index = [0])
+            df['validation_score'] = clf_fit.best_score_
+            df['test_score'] = test_score
+            df['method'] = method
+            df['n_features'] = n
+            df['iteration'] = iteration
+            df['random_state'] = random_state
+            clf_results = clf_results.append(df, sort = False, ignore_index = True)
+            
+            del clf_fit, df, best_model, testing_predictions, test_score
+    
+    del n, method
+    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
+    del training_set, training_features, training_targets
+    del testing_set, testing_features, testing_targets
+    
+del iteration
 
 end_time = time.time()
 
@@ -316,20 +338,50 @@ print('Execution time: %.2f s' % (end_time - start_time))
 
 #%% plot heatmap
 
-# collect best scores for each n features
+# summarise results
+
+clf_summary = pd.DataFrame()
+
+for method in methods:
+    for n in n_features:
+        
+        validation_scores = clf_results[(clf_results['method'] == method) & 
+                                        (clf_results['n_features'] == n)]['validation_score']
+        test_scores = clf_results[(clf_results['method'] == method) & 
+                                  (clf_results['n_features'] == n)]['test_score']
+        
+        df = {}
+        df['method'] = method
+        df['n_features'] = n
+        df['mean_validation_score'] = validation_scores.mean()
+        df['mean_test_score'] = test_scores.mean()
+        df['std_validation_score'] = validation_scores.std()
+        df['std_test_score'] = test_scores.std()
+        
+        clf_summary = clf_summary.append(df, sort = False, ignore_index = True)
+        
+        del df, validation_scores, test_scores
+    
+del method, n
+
+clf_summary = clf_summary[['method', 'n_features', 'mean_validation_score',
+                          'std_validation_score', 'mean_test_score',
+                          'std_test_score']]
+
+# calculate heatmaps
 
 heatmap_validation = []
 heatmap_test = []
 
 for n in n_features:
-    
-    heatmap_validation.append(list(clf_results.loc[clf_results['n_features'] == n]['validation_score']))
-    heatmap_test.append(list(clf_results.loc[clf_results['n_features'] == n]['test_score']))
+
+    heatmap_validation.append(list(clf_summary.loc[clf_summary['n_features'] == n]['mean_validation_score']))
+    heatmap_test.append(list(clf_summary.loc[clf_summary['n_features'] == n]['mean_test_score']))
     
 del n
     
-heatmap_validation = pd.DataFrame(heatmap_validation, index = n_features, columns = names).T
-heatmap_test = pd.DataFrame(heatmap_test, index = n_features, columns = names).T
+heatmap_validation = pd.DataFrame(heatmap_validation, index = n_features, columns = methods).T
+heatmap_test = pd.DataFrame(heatmap_test, index = n_features, columns = methods).T
 
 # plot heatmap
 
@@ -347,8 +399,10 @@ plt.xlabel('Number of features')
 
 #%% save features
 
-model_dir = 'Feature selection\\%s_%s_NF%d_NM%d' % (timestr, scoring, 
-                                                    max(n_features), len(names))
+model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, 
+                                                         max(n_features), 
+                                                         len(methods),
+                                                         n_iterations)
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -359,35 +413,26 @@ f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
-                     'parameters': parameters,
+                     'grid_param': grid_param,
                      'impute_labels': impute_labels,
-                     'impute_values': impute_values,
                      'k': k,
                      'cv': cv,
                      'scoring': scoring,
                      'n_features': n_features,
-                     'names': names,
-                     'k_features': k_features,
-                     'clf': clf,
+                     'n_iterations': n_iterations,
+                     'methods': methods,
                      'clf_results': clf_results,
+                     'clf_summary': clf_summary,
                      'heatmap_validation': heatmap_validation,
                      'heatmap_test': heatmap_test,
                      'start_time': start_time,
                      'end_time': end_time,
-                     'random_state': random_state,
-                     'class_weights': class_weights,
                      'NPV_bins': NPV_bins,
                      'split_ratio': split_ratio,
                      'timestr': timestr,
                      'scaling_type': scaling_type,
                      'model_dir': model_dir,
                      'dataframe': dataframe,
-                     'training_set': training_set,
-                     'training_features': training_features,
-                     'training_targets': training_targets,
-                     'testing_set': testing_set,
-                     'testing_features': testing_features,
-                     'testing_targets': testing_targets,
                      'feature_labels': feature_labels,
                      'target_label': target_label}
     
