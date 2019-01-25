@@ -78,7 +78,7 @@ dataframe['NPV_class'] = dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NP
 
 #%% define feature and target labels
 
-feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'Gravidity', 'Parity',
+feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'Height', 'Gravidity', 'Parity',
                   'History_of_pregnancy', 'Live_births', 'C-section', 'esmya', 
                   'open_myomectomy', 'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
                   'embolisation', 'Subcutaneous_fat_thickness', 'Front-back_distance', 
@@ -96,10 +96,6 @@ target_label = ['NPV_class']
 
 n_iterations = 2
 
-# define maximum number of features
-
-k = 20
-
 # define split ratio for training and testing sets
 
 split_ratio = 0.2
@@ -107,6 +103,15 @@ split_ratio = 0.2
 # define scaling type (log or None)
 
 scaling_type = 'log'
+
+# define cross-validation parameters
+
+cv = 10
+scoring = 'f1_micro'
+
+# define number of features
+
+n_features = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # define scorer methods
 
@@ -162,12 +167,6 @@ rankers = [fisher_score.feature_ranking,
            None
            ]
 
-# define fitting parameters
-
-cv = 10
-scoring = 'f1_micro'
-n_features = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-
 # define parameters for parameter search
 
 grid_param =    [
@@ -187,9 +186,10 @@ grid_param =    [
 impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
                  'infertility']
 
-# empty dataframe for storing results
+# initialise variables
 
 clf_results = pd.DataFrame()
+k = max(n_features)
 
 #%% start the iteration
 
@@ -321,7 +321,7 @@ for iteration in range(0, n_iterations):
             df['random_state'] = random_state
             clf_results = clf_results.append(df, sort = False, ignore_index = True)
             
-            del clf_fit, df, best_model, testing_predictions, test_score
+            del clf_fit, best_model, testing_predictions, test_score, df
     
     del n, method
     del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
@@ -360,7 +360,7 @@ for method in methods:
         
         clf_summary = clf_summary.append(df, sort = False, ignore_index = True)
         
-        del df, validation_scores, test_scores
+        del validation_scores, test_scores, df
     
 del method, n
 
@@ -400,9 +400,9 @@ plt.xlabel('Number of features')
 #%% save features
 
 model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, 
-                                                         max(n_features), 
-                                                         len(methods),
-                                                         n_iterations)
+                                                      max(n_features), 
+                                                      len(methods),
+                                                      n_iterations)
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
