@@ -94,7 +94,7 @@ target_label = ['NPV_class']
 
 # define number of iterations
 
-n_iterations = 2
+n_iterations = 100
 
 # define split ratio for training and testing sets
 
@@ -103,11 +103,6 @@ split_ratio = 0.2
 # define scaling type (log or None)
 
 scaling_type = 'log'
-
-# define cross-validation parameters
-
-cv = 10
-scoring = 'f1_micro'
 
 # define number of features
 
@@ -172,12 +167,14 @@ rankers = [fisher_score.feature_ranking,
 grid_param =    [
                 {
                 'kernel': ['rbf'], 
-                'C': [0.01, 0.1, 1, 10, 100, 1000],
-                'gamma': ['auto', 'scale']
+                'C': [0.01, 0.1, 1, 10, 100],
+                'gamma': ['scale'],
+                'random_state': [None]
                 },
                 {
                 'kernel': ['linear'], 
-                'C': [0.01, 0.1, 1, 10, 100, 1000]
+                'C': [0.01, 0.1, 1, 10, 100],
+                'random_state': [None]
                 }
                 ]
 
@@ -186,10 +183,27 @@ grid_param =    [
 impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
                  'infertility']
 
+# define classification model
+
+max_iter = 200000
+class_weight = 'balanced'
+
+clf_model = SVC(probability = True, class_weight = class_weight, cache_size = 3000,
+                max_iter = max_iter)
+
+# define parameter search method
+
+cv = 10
+scoring = 'f1_micro'
+    
+clf_grid = GridSearchCV(clf_model, grid_param, n_jobs = -1, cv = cv, 
+                        scoring = scoring, refit = True, iid = False)
+
 # initialise variables
 
 clf_results = pd.DataFrame()
-k = max(n_features)
+feature_rankings = pd.DataFrame()
+k = len(feature_labels)
 
 #%% start the iteration
 
@@ -202,10 +216,15 @@ for iteration in range(0, n_iterations):
 
     random_state = np.random.randint(0, 10000)
     
+    # assign random state to grid parameters
+    
+    grid_param[0]['random_state'] = [random_state]
+    grid_param[1]['random_state'] = [random_state]
+    
     # print progress
     
-    print('Iteration %d with random state %d at %.1f s' % (iteration, random_state, 
-                                                           (time.time() - start_time)))
+    print('Iteration %d with random state %d at %.1f min' % (iteration, random_state, 
+                                                             ((time.time() - start_time) / 60)))
     
     # randomise and divive data for cross-validation
     
@@ -231,7 +250,7 @@ for iteration in range(0, n_iterations):
             training_set[label] = training_set[label].fillna(impute_values[label])
             testing_set[label] = testing_set[label].fillna(impute_values[label])
             
-    del label
+#    del label
     
     # define features and targets
     
@@ -248,13 +267,7 @@ for iteration in range(0, n_iterations):
         training_features = np.log1p(training_features)
         testing_features = np.log1p(testing_features)
     
-    # calculate class weights
-    
-    class_weights = compute_class_weight('balanced', np.unique(training_targets), 
-                                         training_targets[target_label[0]])
-    class_weights = dict(enumerate(class_weights))
-    
-    # find k best features for each method
+    # find k best features for each feature selection method
     
     k_features = pd.DataFrame(index = range(0, k), columns = methods)
     
@@ -265,7 +278,7 @@ for iteration in range(0, n_iterations):
             indices, _, _ = scorer(training_features.values, training_targets.values[:, 0], n_selected_features = k)
             k_features[method] = pd.DataFrame(training_features.columns.values[indices], columns = [method])
             
-            del indices
+#            del indices
             
         elif method in ('f_classif', 'chi2', 'mutual_info_classif'):
             
@@ -273,7 +286,7 @@ for iteration in range(0, n_iterations):
             selector.fit(training_features.values, training_targets.values[:, 0])
             k_features[method] = list(training_features.columns[selector.get_support(indices = True)])
             
-            del selector
+#            del selector
         
         else:
             
@@ -281,18 +294,16 @@ for iteration in range(0, n_iterations):
             indices = ranker(scores)
             k_features[method] = pd.DataFrame(training_features.columns.values[indices[0:k]], columns = [method])
             
-            del scores, indices
+#            del scores, indices
             
-    del scorer, ranker, method
+#    del scorer, ranker, method
     
-    # define classification model
+    # calculate feature scores
     
-    clf_model = SVC(probability = True, random_state = random_state, class_weight = class_weights)
+    k_rankings = k_features.apply(pd.value_counts, axis = 1).fillna(0)
+    feature_rankings = feature_rankings.add(k_rankings, fill_value = 0)
     
-    # define parameter search method
-    
-    clf_grid = GridSearchCV(clf_model, grid_param, n_jobs = -1, cv = cv, 
-                            scoring = scoring, refit = True, iid = False)
+#    del k_rankings
     
     # train model using parameter search
 
@@ -303,38 +314,36 @@ for iteration in range(0, n_iterations):
         
             clf_fit = clf_grid.fit(training_features[k_features[method][0:n]].values, training_targets.values[:, 0])
             
-            # obtain best results
+            # calculate predictions
             
-            best_model = clf_fit.best_estimator_
-            testing_predictions = best_model.predict(testing_features[k_features[method][0:n]].values)
-            test_score = f1_score(testing_targets.values[:, 0], testing_predictions,
-                                  average = 'micro')
+            testing_predictions = clf_fit.predict(testing_features[k_features[method][0:n]].values)
+            test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = 'micro')
             
             # save results
             
             df = pd.DataFrame(clf_fit.best_params_, index = [0])
+            df['method'] = method
             df['validation_score'] = clf_fit.best_score_
             df['test_score'] = test_score
-            df['method'] = method
             df['n_features'] = n
             df['iteration'] = iteration
             df['random_state'] = random_state
             clf_results = clf_results.append(df, sort = False, ignore_index = True)
             
-            del clf_fit, best_model, testing_predictions, test_score, df
+#            del clf_fit, best_model, testing_predictions, test_score, df
     
-    del n, method
-    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
-    del training_set, training_features, training_targets
-    del testing_set, testing_features, testing_targets
+#    del n, method
+#    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
+#    del training_set, training_features, training_targets
+#    del testing_set, testing_features, testing_targets
     
-del iteration
+#del iteration
 
 end_time = time.time()
 
 # summarise results
 
-print('Execution time: %.2f s' % (end_time - start_time))
+print('Total execution time: %.1f min' % ((end_time - start_time) / 60))
 
 #%% plot heatmap
 
@@ -415,6 +424,8 @@ f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
 variables_to_save = {'nan_percent': nan_percent,
                      'grid_param': grid_param,
                      'impute_labels': impute_labels,
+                     'max_iter': max_iter,
+                     'class_weight': class_weight,
                      'k': k,
                      'cv': cv,
                      'scoring': scoring,
@@ -423,6 +434,7 @@ variables_to_save = {'nan_percent': nan_percent,
                      'methods': methods,
                      'clf_results': clf_results,
                      'clf_summary': clf_summary,
+                     'feature_rankings': feature_rankings,
                      'heatmap_validation': heatmap_validation,
                      'heatmap_test': heatmap_test,
                      'start_time': start_time,
