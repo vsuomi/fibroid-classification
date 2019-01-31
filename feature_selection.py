@@ -32,6 +32,7 @@ from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
 from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import f1_score
 
 from skfeature.function.similarity_based import fisher_score
@@ -100,7 +101,7 @@ n_iterations = 100
 
 split_ratio = 0.2
 
-# define scaling type (log or None)
+# define scaling type ('log', 'minmax' or None)
 
 scaling_type = 'log'
 
@@ -164,19 +165,12 @@ rankers = [fisher_score.feature_ranking,
 
 # define parameters for parameter search
 
-grid_param =    [
-                {
+grid_param =    {
                 'kernel': ['rbf'], 
-                'C': [0.01, 0.1, 1, 10, 100],
-                'gamma': ['scale'],
-                'random_state': [None]
-                },
-                {
-                'kernel': ['linear'], 
-                'C': [0.01, 0.1, 1, 10, 100],
+                'C': [1e-1, 1, 1e1, 1e2, 1e3, 1e4],
+                'gamma': [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4],
                 'random_state': [None]
                 }
-                ]
 
 # define data imputation values
 
@@ -218,8 +212,7 @@ for iteration in range(0, n_iterations):
     
     # assign random state to grid parameters
     
-    grid_param[0]['random_state'] = [random_state]
-    grid_param[1]['random_state'] = [random_state]
+    grid_param['random_state'] = [random_state]
     
     # print progress
     
@@ -266,6 +259,16 @@ for iteration in range(0, n_iterations):
         
         training_features = np.log1p(training_features)
         testing_features = np.log1p(testing_features)
+        
+    elif scaling_type == 'minmax':
+        
+        mms = MinMaxScaler(feature_range = (0, 1)) 
+        training_features = pd.DataFrame(mms.fit_transform(training_features),
+                                         columns = training_features.columns,
+                                         index = training_features.index)
+        testing_features = pd.DataFrame(mms.transform(testing_features),
+                                         columns = testing_features.columns,
+                                         index = testing_features.index)
     
     # find k best features for each feature selection method
     
@@ -391,6 +394,7 @@ del n
     
 heatmap_validation = pd.DataFrame(heatmap_validation, index = n_features, columns = methods).T
 heatmap_test = pd.DataFrame(heatmap_test, index = n_features, columns = methods).T
+heatmap_gap = heatmap_validation - heatmap_test
 
 # plot heatmap
 
@@ -406,6 +410,24 @@ ax = sns.heatmap(heatmap_test, cmap = 'Blues', linewidths = 0.5, annot = True, f
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
 
+f3 = plt.figure()
+ax = sns.heatmap(heatmap_gap, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+#ax.set_aspect(1)
+plt.ylabel('Feature selection method')
+plt.xlabel('Number of features')
+
+# plot parameter distributions
+
+f4 = plt.figure()
+ax = clf_results.C.value_counts().plot(kind = 'bar')
+plt.ylabel('Count')
+plt.xlabel('C')
+
+f5 = plt.figure()
+ax = clf_results.gamma.value_counts().plot(kind = 'bar')
+plt.ylabel('Count')
+plt.xlabel('Gamma')
+
 #%% save features
 
 model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, 
@@ -419,6 +441,12 @@ if not os.path.exists(model_dir):
 f1.savefig(model_dir + '\\' + 'heatmap_validation.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f3.savefig(model_dir + '\\' + 'heatmap_gap.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f4.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f5.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
