@@ -167,8 +167,8 @@ rankers = [fisher_score.feature_ranking,
 
 grid_param =    {
                 'kernel': ['rbf'], 
-                'C': [1e-1, 1, 1e1, 1e2, 1e3, 1e4],
-                'gamma': [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4],
+                'C': list(np.logspace(-1, 4, 6)),
+                'gamma': list(np.logspace(-7, 4, 12)),
                 'random_state': [None]
                 }
 
@@ -243,7 +243,7 @@ for iteration in range(0, n_iterations):
             training_set[label] = training_set[label].fillna(impute_values[label])
             testing_set[label] = testing_set[label].fillna(impute_values[label])
             
-#    del label
+    del label
     
     # define features and targets
     
@@ -281,7 +281,7 @@ for iteration in range(0, n_iterations):
             indices, _, _ = scorer(training_features.values, training_targets.values[:, 0], n_selected_features = k)
             k_features[method] = pd.DataFrame(training_features.columns.values[indices], columns = [method])
             
-#            del indices
+            del indices
             
         elif method in ('f_classif', 'chi2', 'mutual_info_classif'):
             
@@ -289,7 +289,7 @@ for iteration in range(0, n_iterations):
             selector.fit(training_features.values, training_targets.values[:, 0])
             k_features[method] = list(training_features.columns[selector.get_support(indices = True)])
             
-#            del selector
+            del selector
         
         else:
             
@@ -297,16 +297,16 @@ for iteration in range(0, n_iterations):
             indices = ranker(scores)
             k_features[method] = pd.DataFrame(training_features.columns.values[indices[0:k]], columns = [method])
             
-#            del scores, indices
+            del scores, indices
             
-#    del scorer, ranker, method
+    del scorer, ranker, method
     
     # calculate feature scores
     
     k_rankings = k_features.apply(pd.value_counts, axis = 1).fillna(0)
     feature_rankings = feature_rankings.add(k_rankings, fill_value = 0)
     
-#    del k_rankings
+    del k_rankings
     
     # train model using parameter search
 
@@ -333,14 +333,14 @@ for iteration in range(0, n_iterations):
             df['random_state'] = random_state
             clf_results = clf_results.append(df, sort = False, ignore_index = True)
             
-#            del clf_fit, best_model, testing_predictions, test_score, df
+            del clf_fit, best_model, testing_predictions, test_score, df
     
-#    del n, method
-#    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
-#    del training_set, training_features, training_targets
-#    del testing_set, testing_features, testing_targets
+    del n, method
+    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
+    del training_set, training_features, training_targets
+    del testing_set, testing_features, testing_targets
     
-#del iteration
+del iteration
 
 end_time = time.time()
 
@@ -348,55 +348,36 @@ end_time = time.time()
 
 print('Total execution time: %.1f min' % ((end_time - start_time) / 60))
 
-#%% plot heatmap
+#%% calculate summaries
 
 # summarise results
 
-clf_summary = pd.DataFrame()
+mean_validation = clf_results.groupby(['method', 'n_features'], as_index = False)['validation_score'].mean()
+mean_test = clf_results.groupby(['method', 'n_features'])['test_score'].mean().values
 
-for method in methods:
-    for n in n_features:
-        
-        validation_scores = clf_results[(clf_results['method'] == method) & 
-                                        (clf_results['n_features'] == n)]['validation_score']
-        test_scores = clf_results[(clf_results['method'] == method) & 
-                                  (clf_results['n_features'] == n)]['test_score']
-        
-        df = {}
-        df['method'] = method
-        df['n_features'] = n
-        df['mean_validation_score'] = validation_scores.mean()
-        df['mean_test_score'] = test_scores.mean()
-        df['std_validation_score'] = validation_scores.std()
-        df['std_test_score'] = test_scores.std()
-        
-        clf_summary = clf_summary.append(df, sort = False, ignore_index = True)
-        
-        del validation_scores, test_scores, df
-    
-del method, n
+std_validation = clf_results.groupby(['method', 'n_features'])['validation_score'].std().values
+std_test = clf_results.groupby(['method', 'n_features'])['test_score'].std().values
 
-clf_summary = clf_summary[['method', 'n_features', 'mean_validation_score',
-                          'std_validation_score', 'mean_test_score',
-                          'std_test_score']]
+clf_summary = mean_validation.copy()
+clf_summary['test_score'] = mean_test
+clf_summary['validation_std'] =  std_validation
+clf_summary['test_std'] = std_test
 
 # calculate heatmaps
-
-heatmap_validation = []
-heatmap_test = []
-
-for n in n_features:
-
-    heatmap_validation.append(list(clf_summary.loc[clf_summary['n_features'] == n]['mean_validation_score']))
-    heatmap_test.append(list(clf_summary.loc[clf_summary['n_features'] == n]['mean_test_score']))
     
-del n
-    
-heatmap_validation = pd.DataFrame(heatmap_validation, index = n_features, columns = methods).T
-heatmap_test = pd.DataFrame(heatmap_test, index = n_features, columns = methods).T
+heatmap_validation = clf_summary.pivot(index = 'method', columns = 'n_features', 
+                                       values = 'validation_score')
+heatmap_validation.columns = heatmap_validation.columns.astype(int)
+
+heatmap_test = clf_summary.pivot(index = 'method', columns = 'n_features', 
+                                 values = 'test_score')
+heatmap_test.columns = heatmap_test.columns.astype(int)
+
 heatmap_gap = heatmap_validation - heatmap_test
 
-# plot heatmap
+#%% plot figures
+
+# plot heatmaps
 
 f1 = plt.figure()
 ax = sns.heatmap(heatmap_validation, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
@@ -428,7 +409,7 @@ ax = clf_results.gamma.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('Gamma')
 
-#%% save features
+#%% save figures and variables
 
 model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, 
                                                       max(n_features), 
@@ -465,6 +446,7 @@ variables_to_save = {'nan_percent': nan_percent,
                      'feature_rankings': feature_rankings,
                      'heatmap_validation': heatmap_validation,
                      'heatmap_test': heatmap_test,
+                     'heatmap_gap': heatmap_gap,
                      'start_time': start_time,
                      'end_time': end_time,
                      'NPV_bins': NPV_bins,
