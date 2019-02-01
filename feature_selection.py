@@ -26,6 +26,7 @@ import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import LinearSVC
@@ -397,14 +398,30 @@ ax = sns.heatmap(heatmap_gap, cmap = 'Blues', linewidths = 0.5, annot = True, fm
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
 
-# plot parameter distributions
+# plot line graphs
 
 f4 = plt.figure()
+ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'validation_score')
+ax.grid(True)
+ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+plt.ylabel('Mean validation score')
+plt.xlabel('Number of features')
+
+f5 = plt.figure()
+ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score')
+ax.grid(True)
+ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+plt.ylabel('Mean test score')
+plt.xlabel('Number of features')
+
+# plot parameter distributions
+
+f6 = plt.figure()
 ax = clf_results.C.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('C')
 
-f5 = plt.figure()
+f7 = plt.figure()
 ax = clf_results.gamma.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('Gamma')
@@ -425,9 +442,13 @@ f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 f3.savefig(model_dir + '\\' + 'heatmap_gap.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
-f4.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
+f4.savefig(model_dir + '\\' + 'lineplot_validation.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
-f5.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
+f5.savefig(model_dir + '\\' + 'lineplot_test.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f6.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f7.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
