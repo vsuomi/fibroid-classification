@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
 from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
 from sklearn.utils.class_weight import compute_class_weight
@@ -169,7 +168,7 @@ rankers = [fisher_score.feature_ranking,
 grid_param =    {
                 'kernel': ['rbf'], 
                 'C': list(np.logspace(-1, 4, 6)),
-                'gamma': list(np.logspace(-7, 4, 12)),
+                'gamma': list(np.logspace(-8, 4, 13)),
                 'random_state': [None]
                 }
 
@@ -304,8 +303,13 @@ for iteration in range(0, n_iterations):
     
     # calculate feature scores
     
-    k_rankings = k_features.apply(pd.value_counts, axis = 1).fillna(0)
-    feature_rankings = feature_rankings.add(k_rankings, fill_value = 0)
+    k_rankings = pd.DataFrame(k_features.T.values.argsort(1),
+                              columns = np.sort(k_features.iloc[:, 0].values),
+                              index = k_features.columns)
+    k_rankings['method'] = k_rankings.index
+    k_rankings['iteration'] = iteration
+    k_rankings['random_state'] = random_state
+    feature_rankings = feature_rankings.append(k_rankings, sort = False, ignore_index = True)
     
     del k_rankings
     
@@ -334,10 +338,10 @@ for iteration in range(0, n_iterations):
             df['random_state'] = random_state
             clf_results = clf_results.append(df, sort = False, ignore_index = True)
             
-            del clf_fit, best_model, testing_predictions, test_score, df
+            del clf_fit, testing_predictions, test_score, df
     
     del n, method
-    del clf_model, clf_grid, k_features, class_weights, random_state, impute_values
+    del k_features, random_state, impute_values
     del training_set, training_features, training_targets
     del testing_set, testing_features, testing_targets
     
@@ -376,6 +380,11 @@ heatmap_test.columns = heatmap_test.columns.astype(int)
 
 heatmap_gap = heatmap_validation - heatmap_test
 
+# calculate feature rankings
+
+feature_boxplot = feature_rankings[feature_labels].melt(var_name = 'feature', value_name = 'ranking')
+feature_order = feature_boxplot.groupby(['feature'])['ranking'].median().sort_values(ascending = True).index
+
 #%% plot figures
 
 # plot heatmaps
@@ -404,6 +413,7 @@ f4 = plt.figure()
 ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'validation_score')
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+ax.autoscale(enable = True, axis = 'x', tight = True)
 plt.ylabel('Mean validation score')
 plt.xlabel('Number of features')
 
@@ -411,17 +421,29 @@ f5 = plt.figure()
 ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score')
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+ax.autoscale(enable = True, axis = 'x', tight = True)
 plt.ylabel('Mean test score')
 plt.xlabel('Number of features')
 
+# plot feature rankings
+
+f6 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order,
+                 whis = 'range', palette = 'Blues')
+ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
+                   size = 2, color = '.3', linewidth = 0)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 90, ha = 'right')
+plt.ylabel('Ranking')
+plt.xlabel('Feature')
+
 # plot parameter distributions
 
-f6 = plt.figure()
+f7 = plt.figure()
 ax = clf_results.C.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('C')
 
-f7 = plt.figure()
+f8 = plt.figure()
 ax = clf_results.gamma.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('Gamma')
@@ -446,9 +468,11 @@ f4.savefig(model_dir + '\\' + 'lineplot_validation.pdf', dpi = 600, format = 'pd
            bbox_inches = 'tight', pad_inches = 0)
 f5.savefig(model_dir + '\\' + 'lineplot_test.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
-f6.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
+f6.savefig(model_dir + '\\' + 'feature_rankings.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
-f7.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
+f7.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
+           bbox_inches = 'tight', pad_inches = 0)
+f8.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
            bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
@@ -465,6 +489,8 @@ variables_to_save = {'nan_percent': nan_percent,
                      'clf_results': clf_results,
                      'clf_summary': clf_summary,
                      'feature_rankings': feature_rankings,
+                     'feature_boxplot': feature_boxplot,
+                     'feature_order': feature_order,
                      'heatmap_validation': heatmap_validation,
                      'heatmap_test': heatmap_test,
                      'heatmap_gap': heatmap_gap,
