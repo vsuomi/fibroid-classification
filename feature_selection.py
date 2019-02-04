@@ -111,20 +111,20 @@ n_features = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 # define scorer methods
 
-methods =   ['fisher_score', 
-             'reliefF', 
-             'trace_ratio',
-             'gini_index', 
-             'chi_square', 
-             'f_score',
-             'disr', 
-             'cmim',
-             'icap',
-             'jmi',
-             'cife',
-             'mim',
-             'mrmr',
-             'mifs'
+methods =   ['FISH', 
+             'RELF', 
+             'TRAC',
+             'GINI', 
+             'CHI2', 
+             'FSCR',
+             'DISR', 
+             'CMIM',
+             'ICAP',
+             'JMI',
+             'CIFE',
+             'MIM',
+             'MRMR',
+             'MIFS'
              ]
 
 # define scorer functions
@@ -276,7 +276,7 @@ for iteration in range(0, n_iterations):
     
     for scorer, ranker, method in zip(scorers, rankers, methods):
         
-        if method in ('disr', 'cmim', 'icap', 'jmi', 'cife', 'mim', 'mrmr', 'mifs', 'trace_ratio'):
+        if method in ('DISR', 'CMIM', 'ICAP', 'JMI', 'CIFE', 'MIM', 'MRMR', 'MIFS', 'TRAC'):
             
             indices, _, _ = scorer(training_features.values, training_targets.values[:, 0], n_selected_features = k)
             k_features[method] = pd.DataFrame(training_features.columns.values[indices], columns = [method])
