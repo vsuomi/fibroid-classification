@@ -370,47 +370,55 @@ clf_summary['test_std'] = std_test
 
 # calculate heatmaps
     
-heatmap_validation = clf_summary.pivot(index = 'method', columns = 'n_features', values = 'validation_score')
-heatmap_validation.columns = heatmap_validation.columns.astype(int)
+heatmap_validation_score_mean = clf_summary.pivot(index = 'method', 
+                                                  columns = 'n_features', values = 'validation_score')
+heatmap_validation_score_mean.columns = heatmap_validation_score_mean.columns.astype(int)
 
-heatmap_test = clf_summary.pivot(index = 'method', columns = 'n_features', values = 'test_score')
-heatmap_test.columns = heatmap_test.columns.astype(int)
-
-heatmap_gap = heatmap_validation - heatmap_test
+heatmap_test_score_mean = clf_summary.pivot(index = 'method', 
+                                            columns = 'n_features', values = 'test_score')
+heatmap_test_score_mean.columns = heatmap_test_score_mean.columns.astype(int)
 
 # calculate feature rankings
 
 feature_boxplot = feature_rankings[feature_labels].melt(var_name = 'feature', value_name = 'ranking')
-feature_order = feature_boxplot.groupby(['feature'])['ranking'].median().sort_values(ascending = True).index
 
-heatmap_rankings = feature_rankings.groupby(['method'], as_index = False)[feature_labels].mean()
-heatmap_rankings = heatmap_rankings.set_index('method')
+top_features_mean = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].mean()
+top_features_mean['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
+top_features_mean = top_features_mean.sort_values('ranking', ascending = True)
+top_features_mean = top_features_mean.set_index('feature')
+
+top_features_median = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].median()
+top_features_median['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
+top_features_median = top_features_median.sort_values('ranking', ascending = True)
+top_features_median = top_features_median.set_index('feature')
+
+heatmap_rankings_mean = feature_rankings.groupby(['method'], as_index = False)[feature_labels].mean()
+heatmap_rankings_mean = heatmap_rankings_mean.set_index('method')
+
+heatmap_rankings_median = feature_rankings.groupby(['method'], as_index = False)[feature_labels].median()
+heatmap_rankings_median = heatmap_rankings_median.set_index('method')
 
 #%% plot figures
 
 # plot validation and test scores
 
 f1 = plt.figure()
-ax = sns.heatmap(heatmap_validation, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_validation_score_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
 
 f2 = plt.figure()
-ax = sns.heatmap(heatmap_test, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_test_score_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
 
 f3 = plt.figure()
-ax = sns.heatmap(heatmap_gap, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
-#ax.set_aspect(1)
-plt.ylabel('Feature selection method')
-plt.xlabel('Number of features')
-
-f4 = plt.figure()
-ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'validation_score', label = 'Validation')
-ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score', label = 'Test')
+ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'validation_score', 
+                  label = 'Validation', ci = 95)
+ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score', 
+                  label = 'Test', ci = 95)
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
 ax.autoscale(enable = True, axis = 'x', tight = True)
@@ -420,8 +428,8 @@ plt.xlabel('Number of features')
 
 # plot feature rankings
 
-f5 = plt.figure(figsize = (16, 4))
-ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order,
+f4 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = top_features_median.index,
                  whis = 'range', palette = 'Blues')
 #ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
 #                   size = 2, color = '.3', linewidth = 0)
@@ -429,8 +437,14 @@ ax.set_xticklabels(ax.get_xticklabels(), rotation = 90, ha = 'right')
 plt.ylabel('Ranking')
 plt.xlabel('Feature')
 
-f6 = plt.figure(figsize = (22, 4))
-ax = sns.heatmap(heatmap_rankings, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".1f")
+f5 = plt.figure(figsize = (22, 4))
+ax = sns.heatmap(heatmap_rankings_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.1f')
+#ax.set_aspect(1)
+plt.ylabel('Feature selection method')
+plt.xlabel('Feature')
+
+f6 = plt.figure(figsize = (18, 4))
+ax = sns.heatmap(heatmap_rankings_median, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.0f')
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Feature')
@@ -457,22 +471,24 @@ model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr,
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
-f1.savefig(model_dir + '\\' + 'heatmap_validation.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f2.savefig(model_dir + '\\' + 'heatmap_test.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f3.savefig(model_dir + '\\' + 'heatmap_gap.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f4.savefig(model_dir + '\\' + 'lineplot_error.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f5.savefig(model_dir + '\\' + 'feature_rankings.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f6.savefig(model_dir + '\\' + 'heatmap_rankings.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f7.savefig(model_dir + '\\' + 'c_count.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
-f8.savefig(model_dir + '\\' + 'gamma_count.pdf', dpi = 600, format = 'pdf',
-           bbox_inches = 'tight', pad_inches = 0)
+for filetype in ['pdf', 'png', 'eps']:
+    
+    f1.savefig(model_dir + '\\' + 'heatmap_validation_score_mean.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f2.savefig(model_dir + '\\' + 'heatmap_test_score_mean.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f3.savefig(model_dir + '\\' + 'lineplot_scores.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f4.savefig(model_dir + '\\' + 'boxplot_feature_rankings.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f5.savefig(model_dir + '\\' + 'heatmap_rankings_mean.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f6.savefig(model_dir + '\\' + 'heatmap_rankings_median.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f7.savefig(model_dir + '\\' + 'parameter_c.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f8.savefig(model_dir + '\\' + 'parameter_gamma.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
                      'grid_param': grid_param,
@@ -489,11 +505,12 @@ variables_to_save = {'nan_percent': nan_percent,
                      'clf_summary': clf_summary,
                      'feature_rankings': feature_rankings,
                      'feature_boxplot': feature_boxplot,
-                     'feature_order': feature_order,
-                     'heatmap_rankings': heatmap_rankings,
-                     'heatmap_validation': heatmap_validation,
-                     'heatmap_test': heatmap_test,
-                     'heatmap_gap': heatmap_gap,
+                     'top_features_mean': top_features_mean,
+                     'top_features_median': top_features_median,
+                     'heatmap_rankings_mean': heatmap_rankings_mean,
+                     'heatmap_rankings_median': heatmap_rankings_median,
+                     'heatmap_validation_score_mean': heatmap_validation_score_mean,
+                     'heatmap_test_score_mean': heatmap_test_score_mean,
                      'start_time': start_time,
                      'end_time': end_time,
                      'NPV_bins': NPV_bins,
