@@ -30,8 +30,8 @@ import matplotlib.ticker as ticker
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC
-from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
-from sklearn.utils.class_weight import compute_class_weight
+#from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
+#from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import f1_score
 
@@ -66,7 +66,7 @@ dataframe = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
 
 #%% calculate nan percent for each label
 
-nan_percent = pd.DataFrame(dataframe.isnull().mean() * 100, columns = ['% of NaN'])
+nan_percent = pd.DataFrame(dataframe.isnull().mean() * 100, columns = ['NaN ratio'])
 
 #%% display NPV histogram
 
@@ -79,15 +79,47 @@ dataframe['NPV_class'] = dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NP
 
 #%% define feature and target labels
 
-feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'Height', 'Gravidity', 'Parity',
-                  'History_of_pregnancy', 'Live_births', 'C-section', 'esmya', 
-                  'open_myomectomy', 'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
-                  'embolisation', 'Subcutaneous_fat_thickness', 'Front-back_distance', 
-                  'Abdominal_scars', 'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
-                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-                  'Fibroid_volume']
+feature_labels = ['white', 
+                  'black', 
+                  'asian', 
+                  'Age', 
+                  'Weight', 
+                  'Height', 
+                  'Gravidity', 
+                  'Parity',
+                  'History_of_pregnancy', 
+                  'Live_births', 
+                  'C-section', 
+                  'esmya', 
+                  'open_myomectomy', 
+                  'laprascopic_myomectomy', 
+                  'hysteroscopic_myomectomy',
+                  'embolisation', 
+                  'Subcutaneous_fat_thickness', 
+                  'Front-back_distance', 
+                  'Abdominal_scars', 
+                  'bleeding', 
+                  'pain', 
+                  'mass', 
+                  'urinary', 
+                  'infertility',
+                  'Fibroid_diameter', 
+                  'Fibroid_distance', 
+                  'intramural', 
+                  'subserosal', 
+                  'submucosal', 
+                  'anterior', 
+                  'posterior', 
+                  'lateral', 
+                  'fundus',
+                  'anteverted', 
+                  'retroverted', 
+                  'Type_I', 
+                  'Type_II', 
+                  'Type_III',
+#                  'ADC',
+                  'Fibroid_volume'
+                  ]
 
 target_label = ['NPV_class']
 
@@ -174,8 +206,14 @@ grid_param =    {
 
 # define data imputation values
 
-impute_labels = ['Height', 'Gravidity', 'bleeding', 'pain', 'mass', 'urinary',
-                 'infertility']
+impute_labels = ['Height', 
+                 'Gravidity', 
+                 'bleeding', 
+                 'pain', 
+                 'mass', 
+                 'urinary',
+                 'infertility'
+                 ]
 
 # define classification model
 
@@ -267,8 +305,8 @@ for iteration in range(0, n_iterations):
                                          columns = training_features.columns,
                                          index = training_features.index)
         testing_features = pd.DataFrame(mms.transform(testing_features),
-                                         columns = testing_features.columns,
-                                         index = testing_features.index)
+                                        columns = testing_features.columns,
+                                        index = testing_features.index)
     
     # find k best features for each feature selection method
     
@@ -349,48 +387,32 @@ del iteration
 
 end_time = time.time()
 
-# summarise results
-
 print('Total execution time: %.1f min' % ((end_time - start_time) / 60))
 
 #%% calculate summaries
 
 # summarise results
 
-mean_validation = clf_results.groupby(['method', 'n_features'], as_index = False)['validation_score'].mean()
-mean_test = clf_results.groupby(['method', 'n_features'])['test_score'].mean().values
+mean_vscores = clf_results.groupby(['method', 'n_features'], as_index = False)['validation_score'].mean()
+mean_tscores = clf_results.groupby(['method', 'n_features'])['test_score'].mean().values
 
-std_validation = clf_results.groupby(['method', 'n_features'])['validation_score'].std().values
-std_test = clf_results.groupby(['method', 'n_features'])['test_score'].std().values
+std_vscores = clf_results.groupby(['method', 'n_features'])['validation_score'].std().values
+std_tscores = clf_results.groupby(['method', 'n_features'])['test_score'].std().values
 
-clf_summary = mean_validation.copy()
-clf_summary['test_score'] = mean_test
-clf_summary['validation_std'] =  std_validation
-clf_summary['test_std'] = std_test
+clf_summary = mean_vscores.copy()
+clf_summary['test_score'] = mean_tscores
+clf_summary['validation_score_std'] =  std_vscores
+clf_summary['test_score_std'] = std_tscores
 
-# calculate heatmaps
+del mean_vscores, mean_tscores, std_vscores, std_tscores
+
+# calculate heatmaps for test scores, validation scores and feature reankings
     
-heatmap_validation_score_mean = clf_summary.pivot(index = 'method', 
-                                                  columns = 'n_features', values = 'validation_score')
-heatmap_validation_score_mean.columns = heatmap_validation_score_mean.columns.astype(int)
+heatmap_vscore_mean = clf_summary.pivot(index = 'method', columns = 'n_features', values = 'validation_score')
+heatmap_vscore_mean.columns = heatmap_vscore_mean.columns.astype(int)
 
-heatmap_test_score_mean = clf_summary.pivot(index = 'method', 
-                                            columns = 'n_features', values = 'test_score')
-heatmap_test_score_mean.columns = heatmap_test_score_mean.columns.astype(int)
-
-# calculate feature rankings
-
-feature_boxplot = feature_rankings[feature_labels].melt(var_name = 'feature', value_name = 'ranking')
-
-top_features_mean = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].mean()
-top_features_mean['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
-top_features_mean = top_features_mean.sort_values('ranking', ascending = True)
-top_features_mean = top_features_mean.set_index('feature')
-
-top_features_median = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].median()
-top_features_median['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
-top_features_median = top_features_median.sort_values('ranking', ascending = True)
-top_features_median = top_features_median.set_index('feature')
+heatmap_tscore_mean = clf_summary.pivot(index = 'method', columns = 'n_features', values = 'test_score')
+heatmap_tscore_mean.columns = heatmap_tscore_mean.columns.astype(int)
 
 heatmap_rankings_mean = feature_rankings.groupby(['method'], as_index = False)[feature_labels].mean()
 heatmap_rankings_mean = heatmap_rankings_mean.set_index('method')
@@ -398,18 +420,179 @@ heatmap_rankings_mean = heatmap_rankings_mean.set_index('method')
 heatmap_rankings_median = feature_rankings.groupby(['method'], as_index = False)[feature_labels].median()
 heatmap_rankings_median = heatmap_rankings_median.set_index('method')
 
+# calculate box plot
+
+feature_boxplot = feature_rankings[feature_labels].melt(var_name = 'feature', value_name = 'ranking')
+
+# calculate top features based on mean and median values
+
+top_features_mean = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].mean()
+top_features_mean['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
+top_features_mean = top_features_mean.sort_values('ranking', ascending = True)
+top_features_mean = top_features_mean.reset_index(drop = True)
+top_features_mean['method'] = 'TOPN'
+
+top_features_median = feature_boxplot.groupby(['feature'], as_index = False)['ranking'].median()
+top_features_median['std'] = feature_boxplot.groupby(['feature'])['ranking'].std().values
+top_features_median = top_features_median.sort_values('ranking', ascending = True)
+top_features_median = top_features_median.reset_index(drop = True)
+top_features_median['method'] = 'TOPN'
+
+#%% train model with only top features
+
+top_results = pd.DataFrame()
+random_states = clf_results.random_state.unique()
+iteration = 0
+
+time_stamp = time.time()
+
+for random_state in random_states:
+    
+    # assign random state to grid parameters
+    
+    grid_param['random_state'] = [random_state]
+    
+    # print progress
+    
+    print('Iteration %d with random state %d at %.1f min' % (iteration, random_state, 
+                                                             ((time.time() - time_stamp) / 60)))
+    
+    # randomise and divive data for cross-validation
+    
+    training_set, testing_set = train_test_split(dataframe, test_size = split_ratio,
+                                                 stratify = dataframe[target_label],
+                                                 random_state = random_state)
+    
+    impute_values = {}
+    
+    for label in impute_labels:
+        
+        if label in {'Height'}:
+            
+            impute_values[label] = training_set[label].mean()
+            
+            training_set[label] = training_set[label].fillna(impute_values[label])
+            testing_set[label] = testing_set[label].fillna(impute_values[label])
+            
+        else:
+            
+            impute_values[label] = training_set[label].mode()[0]
+            
+            training_set[label] = training_set[label].fillna(impute_values[label])
+            testing_set[label] = testing_set[label].fillna(impute_values[label])
+            
+    del label
+    
+    # define features and targets
+    
+    training_features = training_set[feature_labels]
+    testing_features = testing_set[feature_labels]
+    
+    training_targets = training_set[target_label]
+    testing_targets = testing_set[target_label]
+    
+    # scale features
+       
+    if scaling_type == 'log':
+        
+        training_features = np.log1p(training_features)
+        testing_features = np.log1p(testing_features)
+        
+    elif scaling_type == 'minmax':
+        
+        mms = MinMaxScaler(feature_range = (0, 1)) 
+        training_features = pd.DataFrame(mms.fit_transform(training_features),
+                                         columns = training_features.columns,
+                                         index = training_features.index)
+        testing_features = pd.DataFrame(mms.transform(testing_features),
+                                        columns = testing_features.columns,
+                                        index = testing_features.index)
+    
+    for n in n_features:
+        
+        # fit parameter search
+            
+        clf_fit = clf_grid.fit(training_features[top_features_median['feature'][0:n]].values, training_targets.values[:, 0])
+        
+        # calculate predictions
+        
+        testing_predictions = clf_fit.predict(testing_features[top_features_median['feature'][0:n]].values)
+        test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = 'micro')
+        
+        # save results
+        
+        df = pd.DataFrame(clf_fit.best_params_, index = [0])
+        df['method'] = 'TOPN'
+        df['validation_score'] = clf_fit.best_score_
+        df['test_score'] = test_score
+        df['n_features'] = n
+        df['iteration'] = iteration
+        df['random_state'] = random_state
+        top_results = top_results.append(df, sort = False, ignore_index = True)
+        
+        del clf_fit, testing_predictions, test_score, df
+        
+    del n
+    del impute_values
+    del training_set, training_features, training_targets
+    del testing_set, testing_features, testing_targets
+        
+    iteration += 1
+
+print('Total execution time: %.1f min' % ((time.time() - time_stamp) / 60))
+
+del random_state, iteration, time_stamp
+
+#%% calculate top summaries
+
+# summarise results
+
+mean_vscores = top_results.groupby(['method', 'n_features'], as_index = False)['validation_score'].mean()
+mean_tscores = top_results.groupby(['method', 'n_features'])['test_score'].mean().values
+
+std_vscores = top_results.groupby(['method', 'n_features'])['validation_score'].std().values
+std_tscores = top_results.groupby(['method', 'n_features'])['test_score'].std().values
+
+top_summary = mean_vscores.copy()
+top_summary['test_score'] = mean_tscores
+top_summary['validation_score_std'] =  std_vscores
+top_summary['test_score_std'] = std_tscores
+
+del mean_vscores, mean_tscores, std_vscores, std_tscores
+
+# calculate heatmaps for test scores, validation scores and feature reankings
+    
+top_vscore_mean = top_summary.pivot(index = 'method', columns = 'n_features', values = 'validation_score')
+top_vscore_mean.columns = top_vscore_mean.columns.astype(int)
+
+top_tscore_mean = top_summary.pivot(index = 'method', columns = 'n_features', values = 'test_score')
+top_tscore_mean.columns = top_tscore_mean.columns.astype(int)
+
+top_rankings_mean = top_features_mean.pivot(index = 'method', columns = 'feature', values = 'ranking')
+top_rankings_median = top_features_median.pivot(index = 'method', columns = 'feature', values = 'ranking')
+
+# append top scores into existing heatmaps
+
+heatmap_vscore_mean = heatmap_vscore_mean.append(top_vscore_mean, sort = True, ignore_index = False)
+heatmap_tscore_mean = heatmap_tscore_mean.append(top_tscore_mean, sort = True, ignore_index = False)
+
+heatmap_rankings_mean = heatmap_rankings_mean.append(top_rankings_mean, sort = True, ignore_index = False)
+heatmap_rankings_median = heatmap_rankings_median.append(top_rankings_median, sort = True, ignore_index = False)
+
+del top_vscore_mean, top_tscore_mean, top_rankings_mean, top_rankings_median
+
 #%% plot figures
 
 # plot validation and test scores
 
 f1 = plt.figure()
-ax = sns.heatmap(heatmap_validation_score_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_vscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
 
 f2 = plt.figure()
-ax = sns.heatmap(heatmap_test_score_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_tscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Number of features')
@@ -429,7 +612,7 @@ plt.xlabel('Number of features')
 # plot feature rankings
 
 f4 = plt.figure(figsize = (16, 4))
-ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = top_features_median.index,
+ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = top_features_median['feature'],
                  whis = 'range', palette = 'Blues')
 #ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
 #                   size = 2, color = '.3', linewidth = 0)
@@ -463,19 +646,16 @@ plt.xlabel('Gamma')
 
 #%% save figures and variables
 
-model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, 
-                                                      max(n_features), 
-                                                      len(methods),
-                                                      n_iterations)
+model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, max(n_features), len(methods), n_iterations)
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
 for filetype in ['pdf', 'png', 'eps']:
     
-    f1.savefig(model_dir + '\\' + 'heatmap_validation_score_mean.' + filetype, dpi = 600, format = filetype,
+    f1.savefig(model_dir + '\\' + 'heatmap_vscore_mean.' + filetype, dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
-    f2.savefig(model_dir + '\\' + 'heatmap_test_score_mean.' + filetype, dpi = 600, format = filetype,
+    f2.savefig(model_dir + '\\' + 'heatmap_tscore_mean.' + filetype, dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
     f3.savefig(model_dir + '\\' + 'lineplot_scores.' + filetype, dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
@@ -503,14 +683,16 @@ variables_to_save = {'nan_percent': nan_percent,
                      'methods': methods,
                      'clf_results': clf_results,
                      'clf_summary': clf_summary,
+                     'top_results': top_results,
+                     'top_summary': top_summary,
                      'feature_rankings': feature_rankings,
                      'feature_boxplot': feature_boxplot,
                      'top_features_mean': top_features_mean,
                      'top_features_median': top_features_median,
                      'heatmap_rankings_mean': heatmap_rankings_mean,
                      'heatmap_rankings_median': heatmap_rankings_median,
-                     'heatmap_validation_score_mean': heatmap_validation_score_mean,
-                     'heatmap_test_score_mean': heatmap_test_score_mean,
+                     'heatmap_vscore_mean': heatmap_vscore_mean,
+                     'heatmap_tscore_mean': heatmap_tscore_mean,
                      'start_time': start_time,
                      'end_time': end_time,
                      'NPV_bins': NPV_bins,
