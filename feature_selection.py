@@ -70,58 +70,58 @@ nan_percent = pd.DataFrame(dataframe.isnull().mean() * 100, columns = ['NaN rati
 
 #%% display NPV histogram
 
-dataframe['NPV_percent'].hist(bins = 20)
+dataframe['NPV ratio'].hist(bins = 20)
 
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
-dataframe['NPV_class'] = dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+dataframe['NPV class'] = dataframe[['NPV ratio']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
 #%% define feature and target labels
 
-feature_labels = ['white', 
-                  'black', 
-                  'asian', 
+feature_labels = ['White', 
+                  'Black', 
+                  'Asian', 
                   'Age', 
                   'Weight', 
                   'Height', 
                   'Gravidity', 
                   'Parity',
-                  'History_of_pregnancy', 
-                  'Live_births', 
+                  'Previous pregnancies', 
+                  'Live births', 
                   'C-section', 
-                  'esmya', 
-                  'open_myomectomy', 
-                  'laprascopic_myomectomy', 
-                  'hysteroscopic_myomectomy',
-                  'embolisation', 
-                  'Subcutaneous_fat_thickness', 
-                  'Front-back_distance', 
-                  'Abdominal_scars', 
-                  'bleeding', 
-                  'pain', 
-                  'mass', 
-                  'urinary', 
-                  'infertility',
-                  'Fibroid_diameter', 
-                  'Fibroid_distance', 
-                  'intramural', 
-                  'subserosal', 
-                  'submucosal', 
-                  'anterior', 
-                  'posterior', 
-                  'lateral', 
-                  'fundus',
-                  'anteverted', 
-                  'retroverted', 
-                  'Type_I', 
-                  'Type_II', 
-                  'Type_III',
+                  'Esmya', 
+                  'Open myomectomy', 
+                  'Laprascopic myomectomy', 
+                  'Hysteroscopic myomectomy',
+                  'Embolisation', 
+                  'Subcutaneous fat thickness', 
+                  'Front-back distance', 
+                  'Abdominal scars', 
+                  'Bleeding', 
+                  'Pain', 
+                  'Mass', 
+                  'Urinary', 
+                  'Infertility',
+                  'Fibroid diameter', 
+                  'Fibroid distance', 
+                  'Intramural', 
+                  'Subserosal', 
+                  'Submucosal', 
+                  'Anterior', 
+                  'Posterior', 
+                  'Lateral', 
+                  'Fundus',
+                  'Anteverted', 
+                  'Retroverted', 
+                  'Type I', 
+                  'Type II', 
+                  'Type III',
 #                  'ADC',
-                  'Fibroid_volume'
+                  'Fibroid volume'
                   ]
 
-target_label = ['NPV_class']
+target_label = ['NPV class']
 
 #%% define parameters for iteration
 
@@ -207,12 +207,7 @@ grid_param =    {
 # define data imputation values
 
 impute_labels = ['Height', 
-                 'Gravidity', 
-                 'bleeding', 
-                 'pain', 
-                 'mass', 
-                 'urinary',
-                 'infertility'
+                 'Gravidity'
                  ]
 
 # define classification model
@@ -267,7 +262,7 @@ for iteration in range(0, n_iterations):
     
     for label in impute_labels:
         
-        if label in {'Height'}:
+        if label in {'Height', 'ADC'}:
             
             impute_values[label] = training_set[label].mean()
             
@@ -363,7 +358,7 @@ for iteration in range(0, n_iterations):
             # calculate predictions
             
             testing_predictions = clf_fit.predict(testing_features[k_features[method][0:n]].values)
-            test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = 'micro')
+            test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
             
             # save results
             
@@ -467,7 +462,7 @@ for random_state in random_states:
     
     for label in impute_labels:
         
-        if label in {'Height'}:
+        if label in {'Height', 'ADC'}:
             
             impute_values[label] = training_set[label].mean()
             
@@ -517,7 +512,7 @@ for random_state in random_states:
         # calculate predictions
         
         testing_predictions = clf_fit.predict(testing_features[top_features_median['feature'][0:n]].values)
-        test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = 'micro')
+        test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
         
         # save results
         
