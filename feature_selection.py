@@ -32,7 +32,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC
 #from sklearn.feature_selection import SelectKBest, chi2, f_classif, mutual_info_classif
 #from sklearn.utils.class_weight import compute_class_weight
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.metrics import f1_score
 
 from skfeature.function.similarity_based import fisher_score
@@ -127,13 +127,13 @@ target_label = ['NPV class']
 
 # define number of iterations
 
-n_iterations = 100
+n_iterations = 200
 
 # define split ratio for training and testing sets
 
 split_ratio = 0.2
 
-# define scaling type ('log', 'minmax' or None)
+# define scaling type ('log', 'minmax', 'standard' or None)
 
 scaling_type = 'log'
 
@@ -295,11 +295,21 @@ for iteration in range(0, n_iterations):
         
     elif scaling_type == 'minmax':
         
-        mms = MinMaxScaler(feature_range = (0, 1)) 
-        training_features = pd.DataFrame(mms.fit_transform(training_features),
+        scaler = MinMaxScaler(feature_range = (0, 1)) 
+        training_features = pd.DataFrame(scaler.fit_transform(training_features),
                                          columns = training_features.columns,
                                          index = training_features.index)
-        testing_features = pd.DataFrame(mms.transform(testing_features),
+        testing_features = pd.DataFrame(scaler.transform(testing_features),
+                                        columns = testing_features.columns,
+                                        index = testing_features.index)
+        
+    elif scaling_type == 'standard':
+        
+        scaler = StandardScaler() 
+        training_features = pd.DataFrame(scaler.fit_transform(training_features),
+                                         columns = training_features.columns,
+                                         index = training_features.index)
+        testing_features = pd.DataFrame(scaler.transform(testing_features),
                                         columns = testing_features.columns,
                                         index = testing_features.index)
     
@@ -495,11 +505,21 @@ for random_state in random_states:
         
     elif scaling_type == 'minmax':
         
-        mms = MinMaxScaler(feature_range = (0, 1)) 
-        training_features = pd.DataFrame(mms.fit_transform(training_features),
+        scaler = MinMaxScaler(feature_range = (0, 1)) 
+        training_features = pd.DataFrame(scaler.fit_transform(training_features),
                                          columns = training_features.columns,
                                          index = training_features.index)
-        testing_features = pd.DataFrame(mms.transform(testing_features),
+        testing_features = pd.DataFrame(scaler.transform(testing_features),
+                                        columns = testing_features.columns,
+                                        index = testing_features.index)
+        
+    elif scaling_type == 'standard':
+        
+        scaler = StandardScaler() 
+        training_features = pd.DataFrame(scaler.fit_transform(training_features),
+                                         columns = training_features.columns,
+                                         index = training_features.index)
+        testing_features = pd.DataFrame(scaler.transform(testing_features),
                                         columns = testing_features.columns,
                                         index = testing_features.index)
     
@@ -576,7 +596,22 @@ heatmap_rankings_median = heatmap_rankings_median.append(top_rankings_median, so
 
 del top_vscore_mean, top_tscore_mean, top_rankings_mean, top_rankings_median
 
+#%% calculate feature correlations
+
+# correlation matrix
+
+feature_corr = dataframe[feature_labels].corr()
+
+# a mask for the upper triangle
+
+corr_mask = np.zeros_like(feature_corr, dtype = np.bool)
+corr_mask[np.triu_indices_from(corr_mask)] = True
+
 #%% plot figures
+
+# define colormap
+
+cmap = sns.diverging_palette(220, 10, as_cmap = True)
 
 # plot validation and test scores
 
@@ -608,10 +643,10 @@ plt.xlabel('Number of features')
 
 f4 = plt.figure(figsize = (16, 4))
 ax = sns.boxplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = top_features_median['feature'],
-                 whis = 'range', palette = 'Blues')
+                 whis = 1.5, palette = 'Blues', fliersize = 2, notch = True)
 #ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
 #                   size = 2, color = '.3', linewidth = 0)
-ax.set_xticklabels(ax.get_xticklabels(), rotation = 90, ha = 'right')
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
 plt.ylabel('Ranking')
 plt.xlabel('Feature')
 
@@ -639,6 +674,12 @@ ax = clf_results.gamma.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('Gamma')
 
+# plot feature correlations
+
+f9 = plt.figure(figsize = (16, 16))
+ax = sns.heatmap(feature_corr, mask = corr_mask, cmap = cmap, vmax = 0.3, center = 0,
+            square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5})
+
 #%% save figures and variables
 
 model_dir = 'Feature selection\\%s_NF%d_NM%d_NI%d' % (timestr, max(n_features), len(methods), n_iterations)
@@ -664,6 +705,8 @@ for filetype in ['pdf', 'png', 'eps']:
                bbox_inches = 'tight', pad_inches = 0)
     f8.savefig(model_dir + '\\' + 'parameter_gamma.' + filetype, dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
+    f9.savefig(model_dir + '\\' + 'feature_corr.' + filetype, dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
                      'grid_param': grid_param,
@@ -680,6 +723,8 @@ variables_to_save = {'nan_percent': nan_percent,
                      'clf_summary': clf_summary,
                      'top_results': top_results,
                      'top_summary': top_summary,
+                     'feature_corr': feature_corr,
+                     'corr_mask': corr_mask,
                      'feature_rankings': feature_rankings,
                      'feature_boxplot': feature_boxplot,
                      'top_features_mean': top_features_mean,
