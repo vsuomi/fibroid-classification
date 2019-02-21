@@ -677,7 +677,7 @@ plt.xlabel('Gamma')
 # plot feature correlations
 
 f9 = plt.figure(figsize = (16, 16))
-ax = sns.heatmap(feature_corr, mask = corr_mask, cmap = cmap, vmax = 0.3, center = 0,
+ax = sns.heatmap(feature_corr, mask = corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
             square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5})
 
 #%% save figures and variables
