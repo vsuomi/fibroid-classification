@@ -31,6 +31,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
+from sklearn.naive_bayes import ComplementNB
 from logitboost import LogitBoost
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
@@ -47,50 +48,66 @@ pd.options.display.float_format = '{:.1f}'.format
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'C:\Users\visa\Documents\TYKS\Machine learning\Uterine fibroid\fibroid_dataframe_combined.csv', sep = ',')
+fibroid_dataframe = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
 
 #%% calculate nan percent for each label
 
 nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['% of NaN'])
 
-#%% replace nan values
-
-#fibroid_dataframe['Height'] = fibroid_dataframe['Height'].fillna(fibroid_dataframe['Height'].mean())
-#fibroid_dataframe['Gravidity'] = fibroid_dataframe['Gravidity'].fillna(fibroid_dataframe['Gravidity'].mode()[0])
-#fibroid_dataframe['bleeding'] = fibroid_dataframe['bleeding'].fillna(fibroid_dataframe['bleeding'].mode()[0])
-#fibroid_dataframe['pain'] = fibroid_dataframe['pain'].fillna(fibroid_dataframe['pain'].mode()[0])
-#fibroid_dataframe['mass'] = fibroid_dataframe['mass'].fillna(fibroid_dataframe['mass'].mode()[0])
-#fibroid_dataframe['urinary'] = fibroid_dataframe['urinary'].fillna(fibroid_dataframe['urinary'].mode()[0])
-#fibroid_dataframe['infertility'] = fibroid_dataframe['infertility'].fillna(fibroid_dataframe['infertility'].mode()[0])
-#fibroid_dataframe['ADC'] = fibroid_dataframe['ADC'].fillna(fibroid_dataframe['ADC'].mean())
-
 #%% display NPV histogram
 
-fibroid_dataframe['NPV_percent'].hist(bins = 20)
+fibroid_dataframe['NPV ratio'].hist(bins = 20)
 
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
-fibroid_dataframe['NPV_class'] = fibroid_dataframe[['NPV_percent']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+fibroid_dataframe['NPV class'] = fibroid_dataframe[['NPV ratio']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
 #%% define feature and target labels
 
-feature_labels = ['V2_system',
-                  'Subcutaneous_fat_thickness', 'Abdominal_scars',
-                  'Fibroid_diameter', 'Fibroid_distance', 
-                  'anteverted', 'retroverted', 'vertical']
+feature_labels = ['White', 
+                  'Black', 
+                  'Asian', 
+                  'Age', 
+                  'Weight', 
+                  'Height', 
+                  'Gravidity', 
+                  'Parity',
+                  'Previous pregnancies', 
+                  'Live births', 
+                  'C-section', 
+                  'Esmya', 
+                  'Open myomectomy', 
+                  'Laprascopic myomectomy', 
+                  'Hysteroscopic myomectomy',
+                  'Embolisation', 
+                  'Subcutaneous fat thickness', 
+                  'Front-back distance', 
+                  'Abdominal scars', 
+                  'Bleeding', 
+                  'Pain', 
+                  'Mass', 
+                  'Urinary', 
+                  'Infertility',
+                  'Fibroid diameter', 
+                  'Fibroid distance', 
+                  'Intramural', 
+                  'Subserosal', 
+                  'Submucosal', 
+                  'Anterior', 
+                  'Posterior', 
+                  'Lateral', 
+                  'Fundus',
+                  'Anteverted', 
+                  'Retroverted', 
+                  'Type I', 
+                  'Type II', 
+                  'Type III',
+#                  'ADC',
+                  'Fibroid volume'
+                  ]
 
-#feature_labels = ['white', 'black', 'asian', 'Age', 'Weight', 'History_of_pregnancy',
-#                  'Live_births', 'C-section', 'esmya', 'open_myomectomy', 
-#                  'laprascopic_myomectomy', 'hysteroscopic_myomectomy',
-#                  'Subcutaneous_fat_thickness', 'Front-back_distance', 'Abdominal_scars',
-#                  'bleeding', 'pain', 'mass', 'urinary', 'infertility',
-#                  'Fibroid_diameter', 'Fibroid_distance', 'intramural', 'subserosal', 
-#                  'submucosal', 'anterior', 'posterior', 'lateral', 'fundus',
-#                  'anteverted', 'retroverted', 'Type_I', 'Type_II', 'Type_III',
-#                  'Fibroid_volume', 'ADC']
-
-target_label = ['NPV_class']
+target_label = ['NPV class']
 
 #%% randomise and divive data for cross-validation
 
@@ -108,9 +125,33 @@ testing_features = testing_set[feature_labels]
 training_targets = training_set[target_label]
 testing_targets = testing_set[target_label]
 
+#%% impute data
+
+impute_labels = ['Height', 
+                 'Gravidity'
+                 ]
+
+impute_values = {}
+
+for label in impute_labels:
+    
+    if label in {'Height', 'ADC'}:
+        
+        impute_values[label] = training_set[label].mean()
+        
+        training_set[label] = training_set[label].fillna(impute_values[label])
+        testing_set[label] = testing_set[label].fillna(impute_values[label])
+        
+    else:
+        
+        impute_values[label] = training_set[label].mode()[0]
+        
+        training_set[label] = training_set[label].fillna(impute_values[label])
+        testing_set[label] = testing_set[label].fillna(impute_values[label])
+
 #%% scale features
 
-scaling_type = 'z-score'
+scaling_type = 'log'
 
 if scaling_type == 'z-score':
 
@@ -119,6 +160,11 @@ if scaling_type == 'z-score':
     
     training_features = (training_features - z_mean) / z_std
     testing_features = (testing_features - z_mean) / z_std
+    
+elif scaling_type == 'log':
+    
+    training_features = np.log1p(training_features)
+    testing_features = np.log1p(testing_features)
 
 #%% calculate class weights
 
@@ -141,7 +187,8 @@ models =    {
             'GradientBoostingClassifier': GradientBoostingClassifier(),
             'SVC': SVC(),
             'LogitBoost': LogitBoost(),
-            'XGBClassifier': XGBClassifier()
+            'XGBClassifier': XGBClassifier(),
+            'ComplementNB': ComplementNB()
             }
 
 # define model parameters for parameter search
@@ -170,7 +217,7 @@ param_adaboost =        {
 
 param_gradient_boost =  {
                         'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
                         'subsample': [0.8, 0.9, 1],
                         'min_samples_split': [2, 4],
                         'max_features': ['sqrt', None],
@@ -180,14 +227,14 @@ param_gradient_boost =  {
 param_svc =             [
                         {
                         'kernel': ['rbf'], 
-                        'C': [0.01, 0.1, 1, 10, 100],
+                        'C': [0.005, 0.01, 0.1, 1, 10, 100],
                         'gamma': ['auto', 'scale'],
                         'random_state': [random_state],
                         'class_weight': [class_weights]
                         },
                         {
                         'kernel': ['linear'], 
-                        'C': [0.01, 0.1, 1, 10, 100],
+                        'C': [0.005, 0.01, 0.1, 1, 10, 100],
                         'random_state': [random_state],
                         'class_weight': [class_weights]
                         }
@@ -195,17 +242,22 @@ param_svc =             [
 
 param_logitboost  =     {
                         'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
                         'random_state': [random_state]
                         }
 
 param_xgb =             {
-                        'learning_rate': [0.01, 0.05, 0.1, 0.5, 1],
+                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
                         'n_estimators': [10, 50, 100, 200, 300],
                         'subsample': [0.8, 0.9, 1],
-                        'reg_alpha': [0, 1, 10],
-                        'reg_lambda': [0, 1, 10],
+                        'reg_alpha': [0, 1, 5, 10],
+                        'reg_lambda': [0, 1, 5, 10],
                         'random_state': [random_state]
+                        }
+
+param_complementnb =    {
+                        'alpha': [0.01, 0.1, 1, 10, 100],
+                        'norm': [True, False]
                         }
 
 # combine parameters
@@ -217,7 +269,8 @@ parameters =    {
                 'GradientBoostingClassifier': param_gradient_boost,
                 'SVC': param_svc,
                 'LogitBoost': param_logitboost,
-                'XGBClassifier': param_xgb
+                'XGBClassifier': param_xgb,
+                'ComplementNB': param_complementnb
                 }
 
 #%% perform cross-validation and parameter search
