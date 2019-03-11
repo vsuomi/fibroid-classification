@@ -325,14 +325,6 @@ for iteration in range(0, n_iterations):
             k_features[method] = pd.DataFrame(training_features.columns.values[indices], columns = [method])
             
             del indices
-            
-        elif method in ('f_classif', 'chi2', 'mutual_info_classif'):
-            
-            selector = SelectKBest(scorer, k = k)
-            selector.fit(training_features.values, training_targets.values[:, 0])
-            k_features[method] = list(training_features.columns[selector.get_support(indices = True)])
-            
-            del selector
         
         else:
             
@@ -678,7 +670,7 @@ plt.xlabel('Gamma')
 
 f9 = plt.figure(figsize = (16, 16))
 ax = sns.heatmap(feature_corr, mask = corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
-            square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5})
+            square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
 
 #%% save figures and variables
 
