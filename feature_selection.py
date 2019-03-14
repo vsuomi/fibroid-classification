@@ -592,12 +592,16 @@ del top_vscore_mean, top_tscore_mean, top_rankings_mean, top_rankings_median
 
 # correlation matrix
 
-feature_corr = dataframe[feature_labels].corr()
+feature_corr = dataframe[feature_labels].corr(method = 'pearson')
+method_corr = heatmap_rankings_median.T.corr(method = 'kendall')
 
 # a mask for the upper triangle
 
-corr_mask = np.zeros_like(feature_corr, dtype = np.bool)
-corr_mask[np.triu_indices_from(corr_mask)] = True
+feature_corr_mask = np.zeros_like(feature_corr, dtype = np.bool)
+feature_corr_mask[np.triu_indices_from(feature_corr_mask)] = True
+
+method_corr_mask = np.zeros_like(method_corr, dtype = np.bool)
+method_corr_mask[np.triu_indices_from(method_corr_mask)] = True
 
 #%% plot figures
 
@@ -666,11 +670,15 @@ ax = clf_results.gamma.value_counts().plot(kind = 'bar')
 plt.ylabel('Count')
 plt.xlabel('Gamma')
 
-# plot feature correlations
+# plot correlations
 
 f9 = plt.figure(figsize = (16, 16))
-ax = sns.heatmap(feature_corr, mask = corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
-            square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
+ax = sns.heatmap(feature_corr, mask = feature_corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
+                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
+
+f10 = plt.figure(figsize = (6, 6))
+ax = sns.heatmap(method_corr, mask = method_corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
+                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
 
 #%% save figures and variables
 
@@ -699,6 +707,8 @@ for filetype in ['pdf', 'png', 'eps']:
                bbox_inches = 'tight', pad_inches = 0)
     f9.savefig(model_dir + '\\' + 'feature_corr.' + filetype, dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
+    f10.savefig(model_dir + '\\' + 'method_corr.' + filetype, dpi = 600, format = filetype,
+                bbox_inches = 'tight', pad_inches = 0)
 
 variables_to_save = {'nan_percent': nan_percent,
                      'grid_param': grid_param,
@@ -716,7 +726,9 @@ variables_to_save = {'nan_percent': nan_percent,
                      'top_results': top_results,
                      'top_summary': top_summary,
                      'feature_corr': feature_corr,
-                     'corr_mask': corr_mask,
+                     'feature_corr_mask': feature_corr_mask,
+                     'method_corr': method_corr,
+                     'method_corr_mask': method_corr_mask,
                      'feature_rankings': feature_rankings,
                      'feature_boxplot': feature_boxplot,
                      'top_features_mean': top_features_mean,
