@@ -36,32 +36,46 @@ from logitboost import LogitBoost
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import time
 import os
 
 from EstimatorSelectionHelper import EstimatorSelectionHelper
 
+#%% define random state
+
+random_state = np.random.randint(0, 10000)
+
 #%% define logging and data display format
 
 pd.options.display.max_rows = 10
 pd.options.display.float_format = '{:.1f}'.format
+pd.options.mode.chained_assignment = None                                       # disable imputation warnings
 
 #%% read data
 
-fibroid_dataframe = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
+df = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
 
-#%% calculate nan percent for each label
+#%% check for duplicates
 
-nan_percent = pd.DataFrame(fibroid_dataframe.isnull().mean() * 100, columns = ['% of NaN'])
-
-#%% display NPV histogram
-
-fibroid_dataframe['NPV ratio'].hist(bins = 20)
+duplicates = any(df.duplicated())
 
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
-fibroid_dataframe['NPV class'] = fibroid_dataframe[['NPV ratio']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+df['NPV class'] = df[['NPV ratio']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
+
+#%% calculate data quality
+
+df_quality = pd.DataFrame(df.isnull().mean() * 100, columns = ['NaN ratio'])
+df_quality['Mean'] = df.mean()
+df_quality['Median'] = df.median()
+df_quality['SD'] = df.std()
+df_quality['Sum'] = df.sum()
+
+#%% display NPV histogram
+
+df['NPV ratio'].hist(bins = 20)
 
 #%% define feature and target labels
 
@@ -78,7 +92,7 @@ feature_labels = ['White',
                   'C-section', 
                   'Esmya', 
                   'Open myomectomy', 
-                  'Laprascopic myomectomy', 
+                  'Laparoscopic myomectomy', 
                   'Hysteroscopic myomectomy',
                   'Embolisation', 
                   'Subcutaneous fat thickness', 
@@ -114,8 +128,9 @@ target_label = ['NPV class']
 # stratified splitting for unbalanced datasets
 
 split_ratio = 0.2
-training_set, testing_set = train_test_split(fibroid_dataframe, test_size = split_ratio,
-                                             stratify = fibroid_dataframe[target_label])
+training_set, testing_set = train_test_split(df, test_size = split_ratio,
+                                             stratify = df[target_label],
+                                             random_state = random_state)
 
 #%% define features and targets
 
@@ -134,7 +149,7 @@ impute_labels = ['Height',
 impute_values = {}
 
 for label in impute_labels:
-    
+        
     if label in {'Height', 'ADC'}:
         
         impute_values[label] = training_set[label].mean()
@@ -148,33 +163,43 @@ for label in impute_labels:
         
         training_set[label] = training_set[label].fillna(impute_values[label])
         testing_set[label] = testing_set[label].fillna(impute_values[label])
+        
+del label
 
 #%% scale features
 
 scaling_type = 'log'
 
-if scaling_type == 'z-score':
-
-    z_mean = training_features.mean()
-    z_std = training_features.std()
-    
-    training_features = (training_features - z_mean) / z_std
-    testing_features = (testing_features - z_mean) / z_std
-    
-elif scaling_type == 'log':
-    
+if scaling_type == 'log':
+        
     training_features = np.log1p(training_features)
     testing_features = np.log1p(testing_features)
+    
+elif scaling_type == 'minmax':
+    
+    scaler = MinMaxScaler(feature_range = (0, 1)) 
+    training_features = pd.DataFrame(scaler.fit_transform(training_features),
+                                     columns = training_features.columns,
+                                     index = training_features.index)
+    testing_features = pd.DataFrame(scaler.transform(testing_features),
+                                    columns = testing_features.columns,
+                                    index = testing_features.index)
+    
+elif scaling_type == 'standard':
+    
+    scaler = StandardScaler() 
+    training_features = pd.DataFrame(scaler.fit_transform(training_features),
+                                     columns = training_features.columns,
+                                     index = training_features.index)
+    testing_features = pd.DataFrame(scaler.transform(testing_features),
+                                    columns = testing_features.columns,
+                                    index = testing_features.index)
 
 #%% calculate class weights
 
 class_weights = compute_class_weight('balanced', np.unique(training_targets), 
                                      training_targets[target_label[0]])
 class_weights = dict(enumerate(class_weights))
-
-#%% define random state
-
-random_state = np.random.randint(0, 1000)
 
 #%% define models and parameters
 
