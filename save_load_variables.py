@@ -27,14 +27,14 @@ def save_load_variables(directory, variables, fname, opt):
     Args:
         directory: path to file
         variables: variables to save/load/add
-        fname: filename
+        fname: filename with ending
         opt: whether save ('save'), load ('load') or add ('add') variables
         
     Returns:
         variables: loaded variables
     '''
     
-    file_path = os.path.join(directory, (fname + '.pickle'))
+    file_path = os.path.join(directory, fname)
     
     if opt == 'save':
         
