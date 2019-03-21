@@ -73,46 +73,46 @@ df['NPV ratio'].hist(bins = 20)
 
 #%% define feature and target labels
 
-feature_labels = ['White', 
-                  'Black', 
-                  'Asian', 
+feature_labels = [#'White', 
+                  #'Black', 
+                  #'Asian', 
                   'Age', 
                   'Weight', 
                   'Height', 
                   'Gravidity', 
-                  'Parity',
-                  'Previous pregnancies', 
-                  'Live births', 
-                  'C-section', 
-                  'Esmya', 
-                  'Open myomectomy', 
-                  'Laparoscopic myomectomy', 
-                  'Hysteroscopic myomectomy',
-                  'Embolisation', 
+                  #'Parity',
+                  #'Previous pregnancies', 
+                  #'Live births', 
+                  #'C-section', 
+                  #'Esmya', 
+                  #'Open myomectomy', 
+                  #'Laparoscopic myomectomy', 
+                  #'Hysteroscopic myomectomy',
+                  #'Embolisation', 
                   'Subcutaneous fat thickness', 
                   'Front-back distance', 
-                  'Abdominal scars', 
-                  'Bleeding', 
-                  'Pain', 
-                  'Mass', 
-                  'Urinary', 
-                  'Infertility',
+                  #'Abdominal scars', 
+                  #'Bleeding', 
+                  #'Pain', 
+                  #'Mass', 
+                  #'Urinary', 
+                  #'Infertility',
                   'Fibroid diameter', 
                   'Fibroid distance', 
-                  'Intramural', 
-                  'Subserosal', 
-                  'Submucosal', 
-                  'Anterior', 
-                  'Posterior', 
-                  'Lateral', 
+                  #'Intramural', 
+                  #'Subserosal', 
+                  #'Submucosal', 
+                  #'Anterior', 
+                  #'Posterior', 
+                  #'Lateral', 
                   'Fundus',
-                  'Anteverted', 
-                  'Retroverted', 
-                  'Type I', 
-                  'Type II', 
+                  #'Anteverted', 
+                  #'Retroverted', 
+                  #'Type I', 
+                  #'Type II', 
                   'Type III',
-#                  'ADC',
-                  'Fibroid volume'
+                  #'ADC',
+                  #'Fibroid volume'
                   ]
 
 target_label = ['NPV class']
@@ -276,14 +276,16 @@ cm_testing = cm_testing.astype('float') / cm_testing.sum(axis = 1)[:, np.newaxis
 # confusion matrices
 
 f1 = plt.figure(figsize = (6, 4))
-ax = sns.heatmap(cm_training, cmap = 'Greys')
+ax = sns.heatmap(cm_training, cmap = 'Greys', vmin = 0, vmax = 1,
+                 cbar_kws = {'ticks': [0, 0.5, 1]})
 ax.set_aspect(1)
 #    plt.title('Training')
 plt.ylabel('True class')
 plt.xlabel('Predicted class')
 
 f2 = plt.figure(figsize = (6, 4))
-ax = sns.heatmap(cm_testing, cmap = 'Greys')
+ax = sns.heatmap(cm_testing, cmap = 'Greys', vmin = 0, vmax = 1,
+                 cbar_kws = {'ticks': [0, 0.5, 1]})
 ax.set_aspect(1)
 #    plt.title('Testing')
 plt.ylabel('True class')
@@ -302,7 +304,7 @@ model_dir = os.path.join('Scikit models',
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
     
-# save parameters in text file
+# save parameters into text file
     
 with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('timestr: %s\n' % timestr)
