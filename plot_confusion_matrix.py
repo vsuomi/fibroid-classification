@@ -25,7 +25,7 @@ def plot_confusion_matrix(cm):
     
     f1 = plt.figure(figsize = (6, 4))
     
-    ax = sns.heatmap(cm, cmap = 'bone_r')
+    ax = sns.heatmap(cm, cmap = 'Greys')
     ax.set_aspect(1)
 #    plt.title('Confusion matrix')
     plt.ylabel('True class')
