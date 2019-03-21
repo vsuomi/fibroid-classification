@@ -48,7 +48,7 @@ pd.options.mode.chained_assignment = None                                       
 
 #%% read data
 
-df = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
+df = pd.read_csv('fibroid_dataframe.csv', sep = ',')
 
 #%% check for duplicates
 
