@@ -179,11 +179,8 @@ if discretise:
     
     enc = KBinsDiscretizer(n_bins = 10, encode = 'ordinal', strategy = 'uniform')
     
-    bin_training = enc.fit_transform(training_features[disc_labels])
-    bin_testing = enc.transform(testing_features[disc_labels])
-    
-    training_features[disc_labels] = bin_training
-    testing_features[disc_labels] = bin_testing
+    training_features[disc_labels] = enc.fit_transform(training_features[disc_labels])
+    testing_features[disc_labels] = enc.transform(testing_features[disc_labels])
     
     disc_bins = enc.n_bins_
     disc_edges = enc.bin_edges_
@@ -199,23 +196,17 @@ if scaling_type == 'log':
     
 elif scaling_type == 'minmax':
     
-    scaler = MinMaxScaler(feature_range = (0, 1)) 
-    training_features = pd.DataFrame(scaler.fit_transform(training_features),
-                                     columns = training_features.columns,
-                                     index = training_features.index)
-    testing_features = pd.DataFrame(scaler.transform(testing_features),
-                                    columns = testing_features.columns,
-                                    index = testing_features.index)
+    scaler = MinMaxScaler(feature_range = (0, 1))
+    
+    training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
+    testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
     
 elif scaling_type == 'standard':
     
-    scaler = StandardScaler() 
-    training_features = pd.DataFrame(scaler.fit_transform(training_features),
-                                     columns = training_features.columns,
-                                     index = training_features.index)
-    testing_features = pd.DataFrame(scaler.transform(testing_features),
-                                    columns = testing_features.columns,
-                                    index = testing_features.index)
+    scaler = StandardScaler()
+    
+    training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
+    testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
 
 #%% calculate class weights
 
