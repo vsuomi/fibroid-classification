@@ -22,6 +22,8 @@ Created on Thu Jan 10 13:05:04 2019
 
 #%% import necessary libraries
 
+import os
+import time
 import pandas as pd
 import numpy as np
 import scipy as sp
@@ -37,8 +39,6 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import time
-import os
 
 from EstimatorSelectionHelper import EstimatorSelectionHelper
 
@@ -54,7 +54,7 @@ pd.options.mode.chained_assignment = None                                       
 
 #%% read data
 
-df = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
+df = pd.read_csv('fibroid_dataframe.csv', sep = ',')
 
 #%% check for duplicates
 
@@ -79,45 +79,45 @@ df['NPV ratio'].hist(bins = 20)
 
 #%% define feature and target labels
 
-feature_labels = ['White', 
-                  'Black', 
-                  'Asian', 
+feature_labels = [#'White', 
+                  #'Black', 
+                  #'Asian', 
                   'Age', 
                   'Weight', 
                   'Height', 
                   'Gravidity', 
-                  'Parity',
-                  'Previous pregnancies', 
-                  'Live births', 
-                  'C-section', 
-                  'Esmya', 
-                  'Open myomectomy', 
-                  'Laparoscopic myomectomy', 
-                  'Hysteroscopic myomectomy',
-                  'Embolisation', 
+                  #'Parity',
+                  #'Previous pregnancies', 
+                  #'Live births', 
+                  #'C-section', 
+                  #'Esmya', 
+                  #'Open myomectomy', 
+                  #'Laparoscopic myomectomy', 
+                  #'Hysteroscopic myomectomy',
+                  #'Embolisation', 
                   'Subcutaneous fat thickness', 
                   'Front-back distance', 
-                  'Abdominal scars', 
-                  'Bleeding', 
-                  'Pain', 
-                  'Mass', 
-                  'Urinary', 
-                  'Infertility',
+                  #'Abdominal scars', 
+                  #'Bleeding', 
+                  #'Pain', 
+                  #'Mass', 
+                  #'Urinary', 
+                  #'Infertility',
                   'Fibroid diameter', 
                   'Fibroid distance', 
-                  'Intramural', 
-                  'Subserosal', 
-                  'Submucosal', 
-                  'Anterior', 
-                  'Posterior', 
-                  'Lateral', 
+                  #'Intramural', 
+                  #'Subserosal', 
+                  #'Submucosal', 
+                  #'Anterior', 
+                  #'Posterior', 
+                  #'Lateral', 
                   'Fundus',
-                  'Anteverted', 
-                  'Retroverted', 
-                  'Type I', 
-                  'Type II', 
+                  #'Anteverted', 
+                  #'Retroverted', 
+                  #'Type I', 
+                  #'Type II', 
                   'Type III',
-#                  'ADC',
+                  #'ADC',
                   'Fibroid volume'
                   ]
 
@@ -131,14 +131,6 @@ split_ratio = 0.2
 training_set, testing_set = train_test_split(df, test_size = split_ratio,
                                              stratify = df[target_label],
                                              random_state = random_state)
-
-#%% define features and targets
-
-training_features = training_set[feature_labels]
-testing_features = testing_set[feature_labels]
-
-training_targets = training_set[target_label]
-testing_targets = testing_set[target_label]
 
 #%% impute data
 
@@ -165,6 +157,14 @@ for label in impute_labels:
         testing_set[label] = testing_set[label].fillna(impute_values[label])
         
 del label
+
+#%% define features and targets
+
+training_features = training_set[feature_labels]
+testing_features = testing_set[feature_labels]
+
+training_targets = training_set[target_label]
+testing_targets = testing_set[target_label]
 
 #%% scale features
 
@@ -300,8 +300,8 @@ parameters =    {
 
 #%% perform cross-validation and parameter search
 
-scoring = 'f1_micro'
 cv = 10
+scoring = 'f1_micro'
 
 clf = EstimatorSelectionHelper(models, parameters)
 
