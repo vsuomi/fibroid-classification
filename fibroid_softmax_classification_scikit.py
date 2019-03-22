@@ -35,6 +35,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import confusion_matrix, f1_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
+from sklearn.impute import SimpleImputer
 
 #%% define random state
 
@@ -126,32 +127,6 @@ training_set, testing_set = train_test_split(df, test_size = split_ratio,
                                              stratify = df[target_label],
                                              random_state = random_state)
 
-#%% impute data
-
-impute_labels = ['Height', 
-                 'Gravidity'
-                 ]
-
-impute_values = {}
-
-for label in impute_labels:
-        
-    if label in {'Height', 'ADC'}:
-        
-        impute_values[label] = training_set[label].mean()
-        
-        training_set[label] = training_set[label].fillna(impute_values[label])
-        testing_set[label] = testing_set[label].fillna(impute_values[label])
-        
-    else:
-        
-        impute_values[label] = training_set[label].mode()[0]
-        
-        training_set[label] = training_set[label].fillna(impute_values[label])
-        testing_set[label] = testing_set[label].fillna(impute_values[label])
-        
-del label
-
 #%% define features and targets
 
 training_features = training_set[feature_labels]
@@ -159,6 +134,26 @@ testing_features = testing_set[feature_labels]
 
 training_targets = training_set[target_label]
 testing_targets = testing_set[target_label]
+
+#%% impute features
+
+impute = True
+
+if impute:
+    
+    impute_mean =   ['Height',
+                     #'ADC'
+                     ]
+    impute_mode =   ['Gravidity']
+    
+    imp_mean = SimpleImputer(missing_values = np.nan, strategy = 'mean')
+    imp_mode = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
+    
+    training_features[impute_mean] = imp_mean.fit_transform(training_features[impute_mean])
+    testing_features[impute_mean] = imp_mean.transform(testing_features[impute_mean])
+    
+    training_features[impute_mode] = imp_mode.fit_transform(training_features[impute_mode])
+    testing_features[impute_mode] = imp_mode.transform(testing_features[impute_mode])
 
 #%% discretise features
 
