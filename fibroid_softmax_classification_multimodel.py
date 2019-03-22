@@ -38,7 +38,7 @@ from logitboost import LogitBoost
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 
 from EstimatorSelectionHelper import EstimatorSelectionHelper
 
@@ -165,6 +165,33 @@ testing_features = testing_set[feature_labels]
 
 training_targets = training_set[target_label]
 testing_targets = testing_set[target_label]
+
+#%% discretise features
+
+discretise = False
+
+if discretise:
+    
+    disc_labels =   ['Weight',
+                     'Height', 
+                     'Subcutaneous fat thickness', 
+                     'Front-back distance',
+                     'Fibroid diameter', 
+                     'Fibroid distance',
+                     #'Fibroid volume',
+                     #'ADC'
+                     ]
+    
+    enc = KBinsDiscretizer(n_bins = 10, encode = 'ordinal', strategy = 'uniform')
+    
+    bin_training = enc.fit_transform(training_features[disc_labels])
+    bin_testing = enc.transform(testing_features[disc_labels])
+    
+    training_features[disc_labels] = bin_training
+    testing_features[disc_labels] = bin_testing
+    
+    disc_bins = enc.n_bins_
+    disc_edges = enc.bin_edges_
 
 #%% scale features
 
