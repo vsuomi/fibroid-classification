@@ -388,13 +388,13 @@ heatmap_tscore_mean.columns = heatmap_tscore_mean.columns.astype(int)
 # plot validation and test scores
 
 f1 = plt.figure(figsize = (6, 4))
-ax = sns.heatmap(heatmap_vscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_vscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.2f')
 #ax.set_aspect(1)
 plt.ylabel('Classification model')
 plt.xlabel('Number of features')
 
 f2 = plt.figure(figsize = (6, 4))
-ax = sns.heatmap(heatmap_tscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
+ax = sns.heatmap(heatmap_tscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.2f')
 #ax.set_aspect(1)
 plt.ylabel('Classification model')
 plt.xlabel('Number of features')
@@ -406,7 +406,7 @@ ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score',
                   label = 'Test', ci = 95, color = 'k')
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
-ax.yaxis.set_major_locator(ticker.MultipleLocator(0.02))
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.05))
 ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
 ax.autoscale(enable = True, axis = 'x', tight = True)
 plt.legend(loc = 'lower right')
@@ -415,25 +415,32 @@ plt.xlabel('Number of features')
 
 # plot test and validation score in boxplot
 
-f4 = plt.figure(figsize = (16, 4))
-ax = sns.boxplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
-                 whis = 1.5, fliersize = 2, notch = True)
-#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
-#                   size = 2, color = '.3', linewidth = 0)
-ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+f4, ax = plt.subplots(figsize = (16, 4))
+#sns.despine(bottom=True, left=True)
+sns.stripplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results, 
+              dodge = True, jitter = True, alpha = .25, zorder = 1)
+sns.pointplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
+              dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
+ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
-plt.legend(bbox_to_anchor = (1.01, 0.75), loc = 2, borderaxespad = 0, title = 'Number of\n features')
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles[5:], labels[5:], title = 'Number of features', handletextpad = 0, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
 plt.ylabel('Score')
 plt.xlabel('Classification model')
 
-f5 = plt.figure(figsize = (16, 4))
-ax = sns.boxplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results,
-                 whis = 1.5, fliersize = 2, notch = True)
-#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
-#                   size = 2, color = '.3', linewidth = 0)
-ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+f5, ax = plt.subplots(figsize = (16, 4))
+sns.stripplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results, 
+              dodge = True, jitter = True, alpha = .25, zorder = 1)
+sns.pointplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results, 
+              dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
+ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
-plt.legend(bbox_to_anchor = (1.01, 0.75), loc = 2, borderaxespad = 0, title = 'Number of\n features')
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles[5:], labels[5:], title = 'Number of features', handletextpad = 0, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
 plt.ylabel('Score')
 plt.xlabel('Classification model')
 
@@ -474,9 +481,9 @@ for filetype in ['pdf', 'png', 'eps']:
                bbox_inches = 'tight', pad_inches = 0)
     f3.savefig(os.path.join(model_dir, ('lineplot_scores.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
-    f4.savefig(os.path.join(model_dir, ('boxplot_vscore.' + filetype)), dpi = 600, format = filetype,
+    f4.savefig(os.path.join(model_dir, ('swarmplot_vscore.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
-    f5.savefig(os.path.join(model_dir, ('boxplot_tscore.' + filetype)), dpi = 600, format = filetype,
+    f5.savefig(os.path.join(model_dir, ('swarmplot_tscore.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
 
 # save variables
