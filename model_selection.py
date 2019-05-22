@@ -406,11 +406,36 @@ ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score',
                   label = 'Test', ci = 95, color = 'k')
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.02))
 ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
 ax.autoscale(enable = True, axis = 'x', tight = True)
 plt.legend(loc = 'lower right')
 plt.ylabel('Mean score')
 plt.xlabel('Number of features')
+
+# plot test and validation score in boxplot
+
+f4 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
+                 whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
+#                   size = 2, color = '.3', linewidth = 0)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+plt.legend(bbox_to_anchor = (1.01, 0.75), loc = 2, borderaxespad = 0, title = 'Number of\n features')
+plt.ylabel('Score')
+plt.xlabel('Classification model')
+
+f5 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results,
+                 whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
+#                   size = 2, color = '.3', linewidth = 0)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+plt.legend(bbox_to_anchor = (1.01, 0.75), loc = 2, borderaxespad = 0, title = 'Number of\n features')
+plt.ylabel('Score')
+plt.xlabel('Classification model')
 
 #%% save data
 
@@ -448,6 +473,10 @@ for filetype in ['pdf', 'png', 'eps']:
     f2.savefig(os.path.join(model_dir, ('heatmap_tscore_mean.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
     f3.savefig(os.path.join(model_dir, ('lineplot_scores.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f4.savefig(os.path.join(model_dir, ('boxplot_vscore.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f5.savefig(os.path.join(model_dir, ('boxplot_tscore.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
 
 # save variables
