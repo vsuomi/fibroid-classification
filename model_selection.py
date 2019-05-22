@@ -387,13 +387,13 @@ heatmap_tscore_mean.columns = heatmap_tscore_mean.columns.astype(int)
 
 # plot validation and test scores
 
-f1 = plt.figure(figsize = (8, 4))
+f1 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(heatmap_vscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Classification model')
 plt.xlabel('Number of features')
 
-f2 = plt.figure(figsize = (8, 4))
+f2 = plt.figure(figsize = (6, 4))
 ax = sns.heatmap(heatmap_tscore_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = ".2f")
 #ax.set_aspect(1)
 plt.ylabel('Classification model')
@@ -406,9 +406,10 @@ ax = sns.lineplot(data = clf_summary, x = 'n_features', y = 'test_score',
                   label = 'Test', ci = 95, color = 'k')
 ax.grid(True)
 ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
 ax.autoscale(enable = True, axis = 'x', tight = True)
 plt.legend(loc = 'lower right')
-plt.ylabel('Mean error')
+plt.ylabel('Mean score')
 plt.xlabel('Number of features')
 
 #%% save data
