@@ -136,10 +136,10 @@ clf_results = pd.DataFrame()
 # define models
 
 models =    {
-            'ExtraTreesClassifier': ExtraTreesClassifier(),
-            'RandomForestClassifier': RandomForestClassifier(),
-            'AdaBoostClassifier': AdaBoostClassifier(),
-            'GradientBoostingClassifier': GradientBoostingClassifier(),
+            'ExtraTrees': ExtraTreesClassifier(),
+            'RandomForest': RandomForestClassifier(),
+            'AdaBoost': AdaBoostClassifier(),
+            'GradientBoosting': GradientBoostingClassifier(),
             'SVC': SVC(),
             'LogitBoost': LogitBoost(),
             'XGBClassifier': XGBClassifier(),
@@ -177,8 +177,8 @@ param_gradient_boost =  {
 
 param_svc =             {
                         'kernel': ['rbf'],
-                        'C': list(np.logspace(-1, 4, 6)),
-                        'gamma': list(np.logspace(-2, 4, 7)),
+                        'C': [0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0],
+                        'gamma': [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0],
                         'class_weight': ['balanced']
                         }                    
 
@@ -203,10 +203,10 @@ param_complementnb =    {
 # combine parameters
 
 parameters =    {
-                'ExtraTreesClassifier': param_extra_trees,
-                'RandomForestClassifier': param_random_forest,
-                'AdaBoostClassifier': param_adaboost,
-                'GradientBoostingClassifier': param_gradient_boost,
+                'ExtraTrees': param_extra_trees,
+                'RandomForest': param_random_forest,
+                'AdaBoost': param_adaboost,
+                'GradientBoosting': param_gradient_boost,
                 'SVC': param_svc,
                 'LogitBoost': param_logitboost,
                 'XGBClassifier': param_xgb,
@@ -413,7 +413,7 @@ plt.legend(loc = 'lower right')
 plt.ylabel('Mean score')
 plt.xlabel('Number of features')
 
-# plot test and validation score in boxplot
+# stripplots
 
 f4, ax = plt.subplots(figsize = (16, 4))
 #sns.despine(bottom=True, left=True)
@@ -439,6 +439,60 @@ ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
 ax.legend(handles[5:], labels[5:], title = 'Number of features', handletextpad = 0, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+plt.ylabel('Score')
+plt.xlabel('Classification model')
+
+# boxplots
+
+f6 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
+                 whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
+#                   size = 2, color = '.3', linewidth = 0)
+ax.yaxis.grid()
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles, labels, title = 'Number of features', handletextpad = 0.1, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+plt.ylabel('Score')
+plt.xlabel('Classification model')
+
+f7 = plt.figure(figsize = (16, 4))
+ax = sns.boxplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results,
+                 whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
+#                   size = 2, color = '.3', linewidth = 0)
+ax.yaxis.grid()
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles, labels, title = 'Number of features', handletextpad = 0.1, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+plt.ylabel('Score')
+plt.xlabel('Classification model')
+
+# violinplots
+
+f8 = plt.figure(figsize = (16, 4))
+ax = sns.violinplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results)
+ax.yaxis.grid()
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles, labels, title = 'Number of features', handletextpad = 0.1, 
+          columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
+ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
+plt.ylabel('Score')
+plt.xlabel('Classification model')
+
+f9 = plt.figure(figsize = (16, 4))
+ax = sns.violinplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results)
+ax.yaxis.grid()
+ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles, labels, title = 'Number of features', handletextpad = 0.1, 
           columnspacing = 1, loc = 'lower center', ncol = 5, frameon = True)
 ax.set_xticklabels(ax.get_xticklabels(), rotation = 45)
 plt.ylabel('Score')
@@ -481,9 +535,17 @@ for filetype in ['pdf', 'png', 'eps']:
                bbox_inches = 'tight', pad_inches = 0)
     f3.savefig(os.path.join(model_dir, ('lineplot_scores.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
-    f4.savefig(os.path.join(model_dir, ('swarmplot_vscore.' + filetype)), dpi = 600, format = filetype,
+    f4.savefig(os.path.join(model_dir, ('stripplot_vscore.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
-    f5.savefig(os.path.join(model_dir, ('swarmplot_tscore.' + filetype)), dpi = 600, format = filetype,
+    f5.savefig(os.path.join(model_dir, ('stripplot_tscore.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f6.savefig(os.path.join(model_dir, ('boxplot_vscore.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f7.savefig(os.path.join(model_dir, ('boxplot_tscore.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f8.savefig(os.path.join(model_dir, ('violinplot_vscore.' + filetype)), dpi = 600, format = filetype,
+               bbox_inches = 'tight', pad_inches = 0)
+    f9.savefig(os.path.join(model_dir, ('violinplot_tscore.' + filetype)), dpi = 600, format = filetype,
                bbox_inches = 'tight', pad_inches = 0)
 
 # save variables
