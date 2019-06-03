@@ -188,11 +188,11 @@ param_logitboost  =     {
                         }
 
 param_xgb =             {
-                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
                         'n_estimators': [10, 50, 100, 200, 300],
+                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
                         'subsample': [0.8, 0.9, 1],
-                        'reg_alpha': [0, 1, 5, 10],
-                        'reg_lambda': [0, 1, 5, 10]
+                        'reg_alpha': [0, 0.1, 1, 10],
+                        'reg_lambda': [0, 0.1, 1, 10]
                         }
 
 param_complementnb =    {
@@ -383,7 +383,10 @@ heatmap_tscore_mean.columns = heatmap_tscore_mean.columns.astype(int)
 
 #%% plot figures
 
-# define colormap
+# define plotting order alphabetically
+
+order = list(models.keys())
+order.sort()
 
 # plot validation and test scores
 
@@ -418,9 +421,9 @@ plt.xlabel('Number of features')
 f4, ax = plt.subplots(figsize = (16, 4))
 #sns.despine(bottom=True, left=True)
 sns.stripplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results, 
-              dodge = True, jitter = True, alpha = .25, zorder = 1)
+              order = order, dodge = True, jitter = True, alpha = .25, zorder = 1)
 sns.pointplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
-              dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
+              order = order, dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
@@ -432,9 +435,9 @@ plt.xlabel('Classification model')
 
 f5, ax = plt.subplots(figsize = (16, 4))
 sns.stripplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results, 
-              dodge = True, jitter = True, alpha = .25, zorder = 1)
+              order = order, dodge = True, jitter = True, alpha = .25, zorder = 1)
 sns.pointplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results, 
-              dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
+              order = order, dodge = .532, join = False, palette = 'dark', markers = 'd', scale = .75, ci = None)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
@@ -448,9 +451,9 @@ plt.xlabel('Classification model')
 
 f6 = plt.figure(figsize = (16, 4))
 ax = sns.boxplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
-                 whis = 1.5, fliersize = 2, notch = True)
-#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
-#                   size = 2, color = '.3', linewidth = 0)
+                 order = order, whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'model', y = 'validation_score', data = clf_results,
+#                   order = order, size = 2, color = '.3', linewidth = 0)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
@@ -462,9 +465,9 @@ plt.xlabel('Classification model')
 
 f7 = plt.figure(figsize = (16, 4))
 ax = sns.boxplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results,
-                 whis = 1.5, fliersize = 2, notch = True)
-#ax = sns.swarmplot(x = 'feature', y = 'ranking', data = feature_boxplot, order = feature_order, 
-#                   size = 2, color = '.3', linewidth = 0)
+                 order = order, whis = 1.5, fliersize = 2, notch = True)
+#ax = sns.swarmplot(x = 'model', y = 'test_score', data = clf_results,
+#                   order = order, size = 2, color = '.3', linewidth = 0)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
@@ -477,7 +480,8 @@ plt.xlabel('Classification model')
 # violinplots
 
 f8 = plt.figure(figsize = (16, 4))
-ax = sns.violinplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results)
+ax = sns.violinplot(x = 'model', y = 'validation_score', hue = 'n_features', data = clf_results,
+                    order = order)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
@@ -488,7 +492,8 @@ plt.ylabel('Score')
 plt.xlabel('Classification model')
 
 f9 = plt.figure(figsize = (16, 4))
-ax = sns.violinplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results)
+ax = sns.violinplot(x = 'model', y = 'test_score', hue = 'n_features', data = clf_results,
+                    order = order)
 ax.yaxis.grid()
 ax.yaxis.set_major_locator(ticker.MultipleLocator(0.1))
 handles, labels = ax.get_legend_handles_labels()
