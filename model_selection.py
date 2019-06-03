@@ -149,54 +149,58 @@ models =    {
 # define model parameters for parameter search
 
 param_extra_trees =     {
-                        'n_estimators': [10, 50, 100, 200, 300],
+                        'n_estimators': [5, 10, 50, 100, 200],
                         'min_samples_split': [2, 4],
+                        'max_depth': [2, 3, None],
                         'max_features': ['sqrt', None],
                         'class_weight': ['balanced']
                         }
 
 param_random_forest =   {
-                        'n_estimators': [10, 50, 100, 200, 300],
+                        'n_estimators': [5, 10, 50, 100, 200],
                         'min_samples_split': [2, 4],
+                        'max_depth': [2, 3, None],
                         'max_features': ['sqrt', None],
                         'class_weight': ['balanced']
                         }
 
 param_adaboost =        {
-                        'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.1, 0.5, 1, 5, 10]
+                        'n_estimators': [5, 10, 100, 200, 300],
+                        'learning_rate': [0.01, 0.1, 1, 10, 100]
                         }
 
 param_gradient_boost =  {
-                        'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
+                        'n_estimators': [5, 10, 50, 100, 200],
+                        'learning_rate': [0.001, 0.01, 0.1, 1],
                         'subsample': [0.8, 0.9, 1],
                         'min_samples_split': [2, 4],
+                        'max_depth': [2, 3, None],
                         'max_features': ['sqrt', None]
                         }
 
 param_svc =             {
                         'kernel': ['rbf'],
-                        'C': [0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0],
-                        'gamma': [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0],
+                        'C': [0.1, 1.0, 10, 100],
+                        'gamma': [1.0, 10, 100, 1000, 10000],
                         'class_weight': ['balanced']
                         }                    
 
 param_logitboost  =     {
-                        'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1]
+                        'n_estimators': [5, 10, 50, 100, 200],
+                        'learning_rate': [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
                         }
 
 param_xgb =             {
-                        'n_estimators': [10, 50, 100, 200, 300],
-                        'learning_rate': [0.005, 0.01, 0.05, 0.1, 0.5, 1],
+                        'n_estimators': [5, 10, 50, 100, 200],
+                        'learning_rate': [0.001, 0.01, 0.1, 1],
+                        'max_depth': [2, 3],
                         'subsample': [0.8, 0.9, 1],
                         'reg_alpha': [0, 0.1, 1, 10],
                         'reg_lambda': [0, 0.1, 1, 10]
                         }
 
 param_complementnb =    {
-                        'alpha': [0.01, 0.1, 1, 10, 100],
+                        'alpha': [0.1, 1, 10, 100, 1000],
                         'norm': [True, False]
                         }
 
