@@ -607,7 +607,8 @@ method_corr_mask[np.triu_indices_from(method_corr_mask)] = True
 
 # define colormap
 
-cmap = sns.diverging_palette(220, 10, as_cmap = True)
+#cmap = sns.diverging_palette(220, 10, as_cmap = True)
+cmap = 'RdBu'
 
 # plot validation and test scores
 
@@ -647,13 +648,15 @@ plt.ylabel('Ranking')
 plt.xlabel('Feature')
 
 f5 = plt.figure(figsize = (22, 4))
-ax = sns.heatmap(heatmap_rankings_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.1f')
+ax = sns.heatmap(heatmap_rankings_mean, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.1f',
+                 cbar_kws = {'ticks': [0, 19, 38], 'pad': 0.01})
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Feature')
 
 f6 = plt.figure(figsize = (18, 4))
-ax = sns.heatmap(heatmap_rankings_median, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.0f')
+ax = sns.heatmap(heatmap_rankings_median, cmap = 'Blues', linewidths = 0.5, annot = True, fmt = '.0f',
+                 cbar_kws = {'ticks': [0, 19, 38], 'pad': 0.01})
 #ax.set_aspect(1)
 plt.ylabel('Feature selection method')
 plt.xlabel('Feature')
@@ -672,13 +675,15 @@ plt.xlabel('Gamma')
 
 # plot correlations
 
-f9 = plt.figure(figsize = (16, 16))
+f9 = plt.figure(figsize = (6, 6))
 ax = sns.heatmap(feature_corr, mask = feature_corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
-                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
+                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1],
+                                                              'pad': -0.11})
 
 f10 = plt.figure(figsize = (6, 6))
 ax = sns.heatmap(method_corr, mask = method_corr_mask, cmap = cmap, vmin = -1, vmax = 1, center = 0,
-                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1]})
+                 square = True, linewidths = 0.5, cbar_kws = {'shrink': 0.5, 'ticks': [-1, 0, 1],
+                                                              'pad': -0.1})
 
 #%% save figures and variables
 
