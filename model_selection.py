@@ -37,6 +37,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
+from imblearn.over_sampling import RandomOverSampler
 
 # import classifiers
 
@@ -116,6 +117,10 @@ split_ratio = 0.2
 
 impute = True
 
+# oversample
+
+oversample = True
+
 # discretise features
 
 discretise = True
@@ -165,8 +170,8 @@ param_random_forest =   {
                         }
 
 param_adaboost =        {
-                        'n_estimators': [5, 10, 100, 200, 300],
-                        'learning_rate': [0.01, 0.1, 1, 10, 100]
+                        'n_estimators': [5, 10, 50, 100, 200, 300],
+                        'learning_rate': [0.001, 0.01, 0.1, 1, 10]
                         }
 
 param_gradient_boost =  {
@@ -181,13 +186,13 @@ param_gradient_boost =  {
 param_svc =             {
                         'kernel': ['rbf'],
                         'C': [0.1, 1.0, 10, 100],
-                        'gamma': [1.0, 10, 100, 1000, 10000],
+                        'gamma': [1.0, 10, 100, 1000],
                         'class_weight': ['balanced']
                         }                    
 
 param_logitboost  =     {
                         'n_estimators': [5, 10, 50, 100, 200],
-                        'learning_rate': [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+                        'learning_rate': [0.00001, 0.0001, 0.001, 0.01, 0.1]
                         }
 
 param_xgb =             {
@@ -200,7 +205,7 @@ param_xgb =             {
                         }
 
 param_complementnb =    {
-                        'alpha': [0.1, 1, 10, 100, 1000],
+                        'alpha': [0.1, 1, 10, 100, 1000, 10000],
                         'norm': [True, False]
                         }
 
@@ -271,6 +276,17 @@ for iteration in range(0, n_iterations):
 #        testing_features[impute_cons] = imp_cons.transform(testing_features[impute_cons])
         
         del imp_mean, imp_mode, #imp_cons
+        
+    # oversample imbalanced data
+    
+    if oversample == True:
+        
+        ros = RandomOverSampler(sampling_strategy = 'not majority', random_state = random_state)
+        
+        training_features, training_targets = ros.fit_resample(training_features, training_targets)
+        
+        training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+        training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
     
     # discretise features
     
@@ -527,6 +543,7 @@ with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('models: %s\n' % str(list(models.keys())))
     text_file.write('duplicates: %s\n' % str(duplicates))
     text_file.write('n_iterations: %d\n' % n_iterations)
+    text_file.write('oversample: %s\n' % str(oversample))
     text_file.write('discretise: %s\n' % str(discretise))
     text_file.write('impute: %s\n' % str(impute))
     text_file.write('scaling_type: %s\n' % scaling_type)
