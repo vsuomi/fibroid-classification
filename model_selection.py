@@ -58,7 +58,7 @@ pd.options.mode.chained_assignment = None                                       
 
 #%% read data
 
-df = pd.read_csv(r'fibroid_dataframe.csv', sep = ',')
+df = pd.read_csv('fibroid_dataframe.csv', sep = ',')
 
 #%% check for duplicates
 
@@ -125,7 +125,14 @@ oversample = 'random'
 
 # discretise features
 
-discretise = True
+discretise =    ['Age', 
+                 'Weight', 
+                 'Height',
+                 'Subcutaneous fat thickness', 
+                 'Front-back distance',
+                 'Fibroid diameter', 
+                 'Fibroid distance'
+                 ]
 
 # define scaling type ('log', 'minmax', 'standard' or None)
 
@@ -283,7 +290,7 @@ for iteration in range(0, n_iterations):
         
         del imp
         
-    # oversample imbalanced data
+    # oversample imbalanced training data
     
     if oversample == 'random':
         
@@ -317,21 +324,12 @@ for iteration in range(0, n_iterations):
     
     # discretise features
     
-    if discretise == True:
+    if discretise:
     
-        disc_labels =   ['Age', 
-                         'Weight', 
-                         'Height',
-                         'Subcutaneous fat thickness', 
-                         'Front-back distance',
-                         'Fibroid diameter', 
-                         'Fibroid distance'
-                         ]
-        
         enc = KBinsDiscretizer(n_bins = 10, encode = 'ordinal', strategy = 'uniform')
         
-        training_features[disc_labels] = enc.fit_transform(training_features[disc_labels])
-        testing_features[disc_labels] = enc.transform(testing_features[disc_labels])
+        training_features[discretise] = enc.fit_transform(training_features[discretise])
+        testing_features[discretise] = enc.transform(testing_features[discretise])
         
         del enc
     
