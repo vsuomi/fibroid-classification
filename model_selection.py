@@ -115,7 +115,9 @@ split_ratio = 0.2
 
 # impute features
 
-impute = True
+impute_mean =   ['Height']
+impute_mode =   ['Gravidity']
+impute_cons =   []
 
 # define oversampling strategy ('random', 'smote', 'adasyn' or None)
 
@@ -254,28 +256,32 @@ for iteration in range(0, n_iterations):
     
     # impute features
     
-    if impute == True:
-    
-        impute_mean =   ['Height']
+    if impute_mean:
         
-        impute_mode =   ['Gravidity']
+        imp = SimpleImputer(missing_values = np.nan, strategy = 'mean')
         
-#        impute_cons =   []
+        training_features[impute_mean] = imp.fit_transform(training_features[impute_mean])
+        testing_features[impute_mean] = imp.transform(testing_features[impute_mean])
         
-        imp_mean = SimpleImputer(missing_values = np.nan, strategy = 'mean')
-        imp_mode = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
-#        imp_cons = SimpleImputer(missing_values = np.nan, strategy = 'constant', fill_value = 0)
+        del imp
         
-        training_features[impute_mean] = imp_mean.fit_transform(training_features[impute_mean])
-        testing_features[impute_mean] = imp_mean.transform(testing_features[impute_mean])
+    if impute_mode:
         
-        training_features[impute_mode] = imp_mode.fit_transform(training_features[impute_mode])
-        testing_features[impute_mode] = imp_mode.transform(testing_features[impute_mode])
+        imp = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
         
-#        training_features[impute_cons] = imp_cons.fit_transform(training_features[impute_cons])
-#        testing_features[impute_cons] = imp_cons.transform(testing_features[impute_cons])
+        training_features[impute_mode] = imp.fit_transform(training_features[impute_mode])
+        testing_features[impute_mode] = imp.transform(testing_features[impute_mode])
         
-        del imp_mean, imp_mode, #imp_cons
+        del imp
+        
+    if impute_cons:
+        
+        imp = SimpleImputer(missing_values = np.nan, strategy = 'constant', fill_value = 0)
+        
+        training_features[impute_cons] = imp.fit_transform(training_features[impute_cons])
+        testing_features[impute_cons] = imp.transform(testing_features[impute_cons])
+        
+        del imp
         
     # oversample imbalanced data
     
@@ -566,7 +572,9 @@ with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('n_iterations: %d\n' % n_iterations)
     text_file.write('oversample: %s\n' % str(oversample))
     text_file.write('discretise: %s\n' % str(discretise))
-    text_file.write('impute: %s\n' % str(impute))
+    text_file.write('impute_mean: %s\n' % str(impute_mean))
+    text_file.write('impute_mode: %s\n' % str(impute_mode))
+    text_file.write('impute_cons: %s\n' % str(impute_cons))
     text_file.write('scaling_type: %s\n' % str(scaling_type))
     text_file.write('scoring: %s\n' % scoring)
     text_file.write('split_ratio: %.1f\n' % split_ratio)
