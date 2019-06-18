@@ -37,7 +37,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 # import classifiers
 
@@ -117,9 +117,9 @@ split_ratio = 0.2
 
 impute = True
 
-# oversample
+# define oversampling strategy ('random', 'smote', 'adasyn' or None)
 
-oversample = True
+oversample = 'random'
 
 # discretise features
 
@@ -279,14 +279,35 @@ for iteration in range(0, n_iterations):
         
     # oversample imbalanced data
     
-    if oversample == True:
+    if oversample == 'random':
         
-        ros = RandomOverSampler(sampling_strategy = 'not majority', random_state = random_state)
-        
-        training_features, training_targets = ros.fit_resample(training_features, training_targets)
+        osm = RandomOverSampler(sampling_strategy = 'not majority', random_state = random_state)
+        training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
         
         training_features = pd.DataFrame(training_features, columns = testing_features.columns)
         training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
+        
+        del osm
+        
+    elif oversample == 'smote':
+        
+        osm = SMOTE(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
+        training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
+        
+        training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+        training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
+        
+        del osm
+        
+    elif oversample == 'adasyn':
+        
+        osm = ADASYN(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
+        training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
+        
+        training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+        training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
+        
+        del osm
     
     # discretise features
     
@@ -546,7 +567,7 @@ with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('oversample: %s\n' % str(oversample))
     text_file.write('discretise: %s\n' % str(discretise))
     text_file.write('impute: %s\n' % str(impute))
-    text_file.write('scaling_type: %s\n' % scaling_type)
+    text_file.write('scaling_type: %s\n' % str(scaling_type))
     text_file.write('scoring: %s\n' % scoring)
     text_file.write('split_ratio: %.1f\n' % split_ratio)
     text_file.write('cv: %d\n' % cv)
