@@ -49,6 +49,10 @@ from sklearn.svm import SVC
 from sklearn.naive_bayes import ComplementNB
 from logitboost import LogitBoost
 from xgboost import XGBClassifier
+from imblearn.ensemble import BalancedBaggingClassifier
+from imblearn.ensemble import BalancedRandomForestClassifier
+from imblearn.ensemble import RUSBoostClassifier
+from imblearn.ensemble import EasyEnsembleClassifier
 
 #%% define logging and data display format
 
@@ -160,7 +164,11 @@ models =    {
             'SVC': SVC(),
             'LogitBoost': LogitBoost(),
             'XGBClassifier': XGBClassifier(),
-            'ComplementNB': ComplementNB()
+            'ComplementNB': ComplementNB(),
+            'BalancedBagging': BalancedBaggingClassifier(),
+            'BalancedRandomForest': BalancedRandomForestClassifier(),
+            'RUSBoost': RUSBoostClassifier(),
+            'EasyEnsemble': EasyEnsembleClassifier()
             }
 
 # define model parameters for parameter search
@@ -221,6 +229,32 @@ param_complementnb =    {
                         'norm': [True, False]
                         }
 
+param_balanced_bagging =            {
+                                    'n_estimators': [5, 10, 50, 100, 200],
+                                    'max_samples': [0.8, 0.9, 1.0],
+                                    'max_features': [0.8, 0.9, 1.0],
+                                    'n_jobs': [-1]
+                                    }
+
+param_balanced_random_forest =      {
+                                    'n_estimators': [5, 10, 50, 100, 200],
+                                    'min_samples_split': [2, 4],
+                                    'max_depth': [2, 3, None],
+                                    'max_features': ['sqrt', None],
+                                    'class_weight': ['balanced'],
+                                    'n_jobs': [-1]
+                                    }
+
+param_rusboost =                    {
+                                    'n_estimators': [5, 10, 50, 100, 200, 300],
+                                    'learning_rate': [0.001, 0.01, 0.1, 1, 10]
+                                    }
+
+param_easy_ensemble =               {
+                                    'n_estimators': [5, 10, 50, 100, 200, 300],
+                                    'n_jobs': [-1]
+                                    }
+
 # combine parameters
 
 parameters =    {
@@ -231,7 +265,11 @@ parameters =    {
                 'SVC': param_svc,
                 'LogitBoost': param_logitboost,
                 'XGBClassifier': param_xgb,
-                'ComplementNB': param_complementnb
+                'ComplementNB': param_complementnb,
+                'BalancedBagging': param_balanced_bagging,
+                'BalancedRandomForest': param_balanced_random_forest,
+                'RUSBoost': param_rusboost,
+                'EasyEnsemble': param_easy_ensemble
                 }
 
 #%% start the iteration
