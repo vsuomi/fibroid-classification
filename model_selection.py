@@ -36,7 +36,7 @@ import seaborn as sns
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, balanced_accuracy_score
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 # import classifiers
@@ -138,9 +138,12 @@ discretise =    ['Age',
 
 scaling_type = 'log'
 
-# parameters for grid search
+# define the number of cross-validations for grid search
 
 cv = 10
+
+# define scoring metric ('f1_*' or 'balanced_accuracy')
+
 scoring = 'f1_micro'
 
 # initialise variables
@@ -376,7 +379,16 @@ for iteration in range(0, n_iterations):
             # calculate predictions
             
             testing_predictions = clf_fit.predict(testing_features[feature_labels[0:n]].values)
-            test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
+            
+            # calculate test score
+            
+            if scoring[:2] == 'f1':
+                
+                test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
+                
+            elif scoring == 'balanced_accuracy':
+                
+                test_score = balanced_accuracy_score(testing_targets.values[:, 0], testing_predictions)
             
             # save results
             
