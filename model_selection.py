@@ -36,8 +36,9 @@ import seaborn as sns
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import f1_score, balanced_accuracy_score
+from sklearn.metrics import f1_score, balanced_accuracy_score, make_scorer
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
+from imblearn.metrics import geometric_mean_score
 
 # import classifiers
 
@@ -146,9 +147,10 @@ scaling_type = 'log'
 
 cv = 10
 
-# define scoring metric ('f1_*' or 'balanced_accuracy')
+# define scoring metric ('f1_*', 'balanced_accuracy' or custom scorer)
 
 scoring = 'f1_micro'
+#scoring = make_scorer(geometric_mean_score, average = 'multiclass')
 
 # initialise variables
 
@@ -420,13 +422,17 @@ for iteration in range(0, n_iterations):
             
             # calculate test score
             
-            if scoring[:2] == 'f1':
+            if type(scoring) == str and scoring[:2] == 'f1':
                 
                 test_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
                 
-            elif scoring == 'balanced_accuracy':
+            elif type(scoring) == str and scoring == 'balanced_accuracy':
                 
                 test_score = balanced_accuracy_score(testing_targets.values[:, 0], testing_predictions)
+                
+            else:
+                
+                test_score = scoring(clf_fit, testing_features[feature_labels[0:n]].values, testing_targets.values[:, 0])
             
             # save results
             
