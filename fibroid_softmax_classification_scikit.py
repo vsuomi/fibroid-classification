@@ -29,13 +29,30 @@ import pickle
 import pandas as pd
 import numpy as np
 import scipy as sp
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import seaborn as sns
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
-from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
+from sklearn.metrics import confusion_matrix, f1_score, balanced_accuracy_score, make_scorer
+from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
+from imblearn.metrics import geometric_mean_score
+
+# import classifiers
+
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import ComplementNB
+
+from imblearn.ensemble import BalancedBaggingClassifier
+from imblearn.ensemble import BalancedRandomForestClassifier
+from imblearn.ensemble import RUSBoostClassifier
+from imblearn.ensemble import EasyEnsembleClassifier
 
 #%% define random state
 
@@ -55,18 +72,24 @@ df = pd.read_csv('fibroid_dataframe.csv', sep = ',')
 
 duplicates = any(df.duplicated())
 
+#%% display NPV histogram
+
+df['NPV ratio'].hist(bins = 20)
+
 #%% categorise NPV into classes according to bins
 
 NPV_bins = [-1, 29.9, 80, 100]
 df['NPV class'] = df[['NPV ratio']].apply(lambda x: pd.cut(x, NPV_bins, labels = False))
 
-#%% calculate data quality
+#%% calculate data statistics
 
-df_quality = pd.DataFrame(df.isnull().mean() * 100, columns = ['NaN ratio'])
-df_quality['Mean'] = df.mean()
-df_quality['Median'] = df.median()
-df_quality['SD'] = df.std()
-df_quality['Sum'] = df.sum()
+df_stats = pd.DataFrame(df.isnull().mean() * 100, columns = ['NaN ratio'])
+df_stats['Mean'] = df.mean()
+df_stats['Median'] = df.median()
+df_stats['Min'] = df.min()
+df_stats['Max'] = df.max()
+df_stats['SD'] = df.std()
+df_stats['Sum'] = df.sum()
 
 #%% display NPV histogram
 
@@ -118,11 +141,51 @@ feature_labels = [#'White',
 
 target_label = ['NPV class']
 
+#%% define models and parameters
+
+# define split ratio for training and testing sets
+
+split_ratio = 0.2
+
+# impute features
+
+impute_mean =   ['Height']
+impute_mode =   ['Gravidity']
+impute_cons =   []
+
+# define oversampling strategy ('random', 'smote', 'adasyn' or None)
+
+oversample = None
+
+# discretise features
+
+discretise = []
+#discretise =    ['Age', 
+#                 'Weight', 
+#                 'Height',
+#                 'Subcutaneous fat thickness', 
+#                 'Front-back distance',
+#                 'Fibroid diameter', 
+#                 'Fibroid distance'
+#                 ]
+
+# define scaling type ('log', 'minmax', 'standard' or None)
+
+scaling_type = 'log'
+
+# define the number of cross-validations for grid search
+
+cv = 10
+
+# define scoring metric ('f1_*', 'balanced_accuracy' or custom scorer)
+
+scoring = 'f1_micro'
+#scoring = make_scorer(geometric_mean_score, average = 'multiclass')
+
 #%% randomise and divive data for cross-validation
 
 # stratified splitting for unbalanced datasets
 
-split_ratio = 0.2
 training_set, testing_set = train_test_split(df, test_size = split_ratio,
                                              stratify = df[target_label],
                                              random_state = random_state)
@@ -137,51 +200,77 @@ testing_targets = testing_set[target_label]
 
 #%% impute features
 
-impute = True
+if impute_mean:
+    
+    imp = SimpleImputer(missing_values = np.nan, strategy = 'mean')
+    
+    training_features[impute_mean] = imp.fit_transform(training_features[impute_mean])
+    testing_features[impute_mean] = imp.transform(testing_features[impute_mean])
+    
+    del imp
+    
+if impute_mode:
+    
+    imp = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
+    
+    training_features[impute_mode] = imp.fit_transform(training_features[impute_mode])
+    testing_features[impute_mode] = imp.transform(testing_features[impute_mode])
+    
+    del imp
+    
+if impute_cons:
+    
+    imp = SimpleImputer(missing_values = np.nan, strategy = 'constant', fill_value = 0)
+    
+    training_features[impute_cons] = imp.fit_transform(training_features[impute_cons])
+    testing_features[impute_cons] = imp.transform(testing_features[impute_cons])
+    
+    del imp
+    
+#%% oversample imbalanced training data
 
-if impute:
+if oversample == 'random':
     
-    impute_mean =   ['Height',
-                     #'ADC'
-                     ]
-    impute_mode =   ['Gravidity']
+    osm = RandomOverSampler(sampling_strategy = 'not majority', random_state = random_state)
+    training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
     
-    imp_mean = SimpleImputer(missing_values = np.nan, strategy = 'mean')
-    imp_mode = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
+    training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+    training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
     
-    training_features[impute_mean] = imp_mean.fit_transform(training_features[impute_mean])
-    testing_features[impute_mean] = imp_mean.transform(testing_features[impute_mean])
+    del osm
     
-    training_features[impute_mode] = imp_mode.fit_transform(training_features[impute_mode])
-    testing_features[impute_mode] = imp_mode.transform(testing_features[impute_mode])
+elif oversample == 'smote':
+    
+    osm = SMOTE(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
+    training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
+    
+    training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+    training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
+    
+    del osm
+    
+elif oversample == 'adasyn':
+    
+    osm = ADASYN(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
+    training_features, training_targets = osm.fit_resample(training_features.values, training_targets.values[:, 0])
+    
+    training_features = pd.DataFrame(training_features, columns = testing_features.columns)
+    training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
+    
+    del osm
 
 #%% discretise features
 
-discretise = False
-
 if discretise:
-    
-    disc_labels =   ['Weight',
-                     'Height', 
-                     'Subcutaneous fat thickness', 
-                     'Front-back distance',
-                     'Fibroid diameter', 
-                     'Fibroid distance',
-                     #'Fibroid volume',
-                     #'ADC'
-                     ]
     
     enc = KBinsDiscretizer(n_bins = 10, encode = 'ordinal', strategy = 'uniform')
     
-    training_features[disc_labels] = enc.fit_transform(training_features[disc_labels])
-    testing_features[disc_labels] = enc.transform(testing_features[disc_labels])
+    training_features[discretise] = enc.fit_transform(training_features[discretise])
+    testing_features[discretise] = enc.transform(testing_features[discretise])
     
-    disc_bins = enc.n_bins_
-    disc_edges = enc.bin_edges_
+    del enc
 
 #%% scale features
-
-scaling_type = 'log'
 
 if scaling_type == 'log':
         
@@ -190,29 +279,25 @@ if scaling_type == 'log':
     
 elif scaling_type == 'minmax':
     
-    scaler = MinMaxScaler(feature_range = (0, 1))
-    
+    scaler = MinMaxScaler(feature_range = (0, 1)) 
     training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
     testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
+    
+    del scaler
     
 elif scaling_type == 'standard':
     
-    scaler = StandardScaler()
-    
+    scaler = StandardScaler() 
     training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
     testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
+    
+    del scaler
 
 #%% build and train model
-
-# define parameters for grid search
-
-#parameters =    {
-#                'kernel': ['rbf'], 
-#                'C': list(np.logspace(-1, 4, 6)),
-#                'gamma': list(np.logspace(-2, 4, 7))
-#                }
-
-# define parameters for randomised search
+    
+# define model and parameters for randomised search
+    
+# Support Vector Classifier
 
 parameters =    {
                 'kernel': ['rbf'],
@@ -220,25 +305,25 @@ parameters =    {
                 'gamma': sp.stats.reciprocal(1e-2, 1e4)
                 }
 
-# define model
+base_model = SVC(class_weight = 'balanced', random_state = random_state,
+                 cache_size = 4000, max_iter = 200000, probability = True)
 
-max_iter = 200000
-cache_size = 4000
-class_weight = 'balanced'
-
-base_model = SVC(class_weight = class_weight, random_state = random_state,
-                 cache_size = cache_size, max_iter = max_iter, probability = True)
+# Complement Naive-Bayes
+   
+#parameters =    {
+#                'alpha': sp.stats.reciprocal(1e-1, 1e4),
+#                'norm': [True, False]
+#                }
+#
+#base_model = ComplementNB()
 
 # define parameter search method
-
-cv = 10
-scoring = 'f1_micro'
 
 #grid = GridSearchCV(base_model, parameters, scoring = scoring, 
 #                    n_jobs = -1, cv = cv, refit = True, iid = False)
 grid = RandomizedSearchCV(base_model, parameters, scoring = scoring, 
                           n_jobs = -1, cv = cv, refit = True, iid = False,
-                          n_iter = 1000, random_state = random_state)
+                          n_iter = 5000, random_state = random_state)
 
 # train model using parameter search
 
@@ -263,20 +348,28 @@ best_model = grid.best_estimator_
 # make predictions
 
 training_predictions = best_model.predict(training_features.values)
-training_predictions = pd.DataFrame(training_predictions, columns = target_label,
-                                    index = training_features.index, dtype = float)
-
 testing_predictions = best_model.predict(testing_features.values)
-testing_predictions = pd.DataFrame(testing_predictions, columns = target_label,
-                                   index = testing_features.index, dtype = float)
 
 # calculate evaluation metrics
 
-training_accuracy = f1_score(training_targets, training_predictions, average = scoring[3:])
-validation_accuracy = grid.best_score_
-testing_accuracy = f1_score(testing_targets, testing_predictions, average = scoring[3:])
+validation_score = grid.best_score_
 
-# confusion matrix
+if type(scoring) == str and scoring[:2] == 'f1':
+                
+    training_score = f1_score(training_targets.values[:, 0], training_predictions, average = scoring[3:])
+    testing_score = f1_score(testing_targets.values[:, 0], testing_predictions, average = scoring[3:])
+    
+elif type(scoring) == str and scoring == 'balanced_accuracy':
+    
+    training_score = balanced_accuracy_score(training_targets.values[:, 0], training_predictions)
+    testing_score = balanced_accuracy_score(testing_targets.values[:, 0], testing_predictions)
+    
+else:
+    
+    training_score = scoring(best_model, training_features.values, training_targets.values[:, 0])
+    testing_score = scoring(best_model, testing_features.values, testing_targets.values[:, 0])
+
+# calculate confusion matrices
 
 cm_training = confusion_matrix(training_targets, training_predictions)
 cm_training = cm_training.astype('float') / cm_training.sum(axis = 1)[:, np.newaxis]
@@ -309,10 +402,10 @@ plt.xlabel('Predicted class')
 # make directory
 
 model_dir = os.path.join('Scikit models', 
-                         ('%s_TA%d_VA%d_TA%d' % (timestr, 
-                                                 round(training_accuracy*100),
-                                                 round(validation_accuracy*100),
-                                                 round(testing_accuracy*100))))
+                         ('%s_TS%d_VS%d_TS%d' % (timestr, 
+                                                 round(training_score*100),
+                                                 round(validation_score*100),
+                                                 round(testing_score*100))))
 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
@@ -321,16 +414,16 @@ if not os.path.exists(model_dir):
     
 with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('timestr: %s\n' % timestr)
-    text_file.write('estimator: %s\n' % type(base_model).__name__)
     text_file.write('Computation time: %.1f min\n' % ((end_time - start_time) / 60))
-    text_file.write('Total samples: %d\n' % len(df))
-    text_file.write('Training samples: %d\n' % len(training_set))
-    text_file.write('Testing samples: %d\n' % len(testing_set))
-    text_file.write('Total features: %d\n' % len(feature_labels))
-    text_file.write('feature_labels: %s\n' % str(feature_labels))
-    text_file.write('target_label: %s\n' % str(target_label))
+    text_file.write('Number of samples: %d\n' % len(df))
+    text_file.write('Number of features: %d\n' % len(feature_labels))
     text_file.write('duplicates: %s\n' % str(duplicates))
-    text_file.write('scaling_type: %s\n' % scaling_type)
+    text_file.write('oversample: %s\n' % str(oversample))
+    text_file.write('discretise: %s\n' % str(discretise))
+    text_file.write('impute_mean: %s\n' % str(impute_mean))
+    text_file.write('impute_mode: %s\n' % str(impute_mode))
+    text_file.write('impute_cons: %s\n' % str(impute_cons))
+    text_file.write('scaling_type: %s\n' % str(scaling_type))
     text_file.write('scoring: %s\n' % scoring)
     text_file.write('split_ratio: %.1f\n' % split_ratio)
     text_file.write('cv: %d\n' % cv)
