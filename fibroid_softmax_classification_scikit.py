@@ -33,6 +33,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
+from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
@@ -100,10 +101,10 @@ df['NPV ratio'].hist(bins = 20)
 feature_labels = [#'White', 
                   #'Black', 
                   #'Asian', 
-                  'Age', 
-                  'Weight', 
-                  'Height', 
-                  'Gravidity', 
+                  #'Age', 
+                  #'Weight', 
+                  #'Height', 
+                  #'Gravidity', 
                   #'Parity',
                   #'Previous pregnancies', 
                   #'Live births', 
@@ -114,7 +115,7 @@ feature_labels = [#'White',
                   #'Hysteroscopic myomectomy',
                   #'Embolisation', 
                   'Subcutaneous fat thickness', 
-                  'Front-back distance', 
+                  #'Front-back distance', 
                   #'Abdominal scars', 
                   #'Bleeding', 
                   #'Pain', 
@@ -129,11 +130,11 @@ feature_labels = [#'White',
                   #'Anterior', 
                   #'Posterior', 
                   #'Lateral', 
-                  'Fundus',
+                  #'Fundus',
                   #'Anteverted', 
                   #'Retroverted', 
-                  #'Type I', 
-                  #'Type II', 
+                  'Type I', 
+                  'Type II', 
                   'Type III',
                   #'ADC',
                   #'Fibroid volume'
@@ -149,25 +150,25 @@ split_ratio = 0.2
 
 # impute features
 
-impute_mean =   ['Height']
-impute_mode =   ['Gravidity']
+impute_mean =   []
+impute_mode =   []
 impute_cons =   []
 
 # define oversampling strategy ('random', 'smote', 'adasyn' or None)
 
-oversample = None
+oversample = 'adasyn'
 
 # discretise features
 
-discretise = []
-#discretise =    ['Age', 
-#                 'Weight', 
-#                 'Height',
-#                 'Subcutaneous fat thickness', 
-#                 'Front-back distance',
-#                 'Fibroid diameter', 
-#                 'Fibroid distance'
-#                 ]
+#discretise = []
+discretise =    [#'Age', 
+                 #'Weight', 
+                 #'Height',
+                 'Subcutaneous fat thickness', 
+                 #'Front-back distance',
+                 'Fibroid diameter', 
+                 'Fibroid distance'
+                 ]
 
 # define scaling type ('log', 'minmax', 'standard' or None)
 
@@ -179,8 +180,8 @@ cv = 10
 
 # define scoring metric ('f1_*', 'balanced_accuracy' or custom scorer)
 
-scoring = 'f1_micro'
-#scoring = make_scorer(geometric_mean_score, average = 'multiclass')
+#scoring = 'f1_micro'
+scoring = make_scorer(geometric_mean_score, average = 'multiclass')
 
 #%% randomise and divive data for cross-validation
 
@@ -202,30 +203,24 @@ testing_targets = testing_set[target_label]
 
 if impute_mean:
     
-    imp = SimpleImputer(missing_values = np.nan, strategy = 'mean')
+    imp_mean = SimpleImputer(missing_values = np.nan, strategy = 'mean')
     
-    training_features[impute_mean] = imp.fit_transform(training_features[impute_mean])
-    testing_features[impute_mean] = imp.transform(testing_features[impute_mean])
-    
-    del imp
+    training_features[impute_mean] = imp_mean.fit_transform(training_features[impute_mean])
+    testing_features[impute_mean] = imp_mean.transform(testing_features[impute_mean])
     
 if impute_mode:
     
-    imp = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
+    imp_mode = SimpleImputer(missing_values = np.nan, strategy = 'most_frequent')
     
-    training_features[impute_mode] = imp.fit_transform(training_features[impute_mode])
-    testing_features[impute_mode] = imp.transform(testing_features[impute_mode])
-    
-    del imp
+    training_features[impute_mode] = imp_mode.fit_transform(training_features[impute_mode])
+    testing_features[impute_mode] = imp_mode.transform(testing_features[impute_mode])
     
 if impute_cons:
     
-    imp = SimpleImputer(missing_values = np.nan, strategy = 'constant', fill_value = 0)
+    imp_cons = SimpleImputer(missing_values = np.nan, strategy = 'constant', fill_value = 0)
     
-    training_features[impute_cons] = imp.fit_transform(training_features[impute_cons])
-    testing_features[impute_cons] = imp.transform(testing_features[impute_cons])
-    
-    del imp
+    training_features[impute_cons] = imp_cons.fit_transform(training_features[impute_cons])
+    testing_features[impute_cons] = imp_cons.transform(testing_features[impute_cons])
     
 #%% oversample imbalanced training data
 
@@ -237,8 +232,6 @@ if oversample == 'random':
     training_features = pd.DataFrame(training_features, columns = testing_features.columns)
     training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
     
-    del osm
-    
 elif oversample == 'smote':
     
     osm = SMOTE(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
@@ -247,8 +240,6 @@ elif oversample == 'smote':
     training_features = pd.DataFrame(training_features, columns = testing_features.columns)
     training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
     
-    del osm
-    
 elif oversample == 'adasyn':
     
     osm = ADASYN(sampling_strategy = 'not majority', random_state = random_state, n_jobs = -1)
@@ -256,8 +247,6 @@ elif oversample == 'adasyn':
     
     training_features = pd.DataFrame(training_features, columns = testing_features.columns)
     training_targets = pd.DataFrame(training_targets, columns = testing_targets.columns)
-    
-    del osm
 
 #%% discretise features
 
@@ -267,8 +256,6 @@ if discretise:
     
     training_features[discretise] = enc.fit_transform(training_features[discretise])
     testing_features[discretise] = enc.transform(testing_features[discretise])
-    
-    del enc
 
 #%% scale features
 
@@ -283,15 +270,11 @@ elif scaling_type == 'minmax':
     training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
     testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
     
-    del scaler
-    
 elif scaling_type == 'standard':
     
     scaler = StandardScaler() 
     training_features[feature_labels] = scaler.fit_transform(training_features[feature_labels])
     testing_features[feature_labels] = scaler.transform(testing_features[feature_labels])
-    
-    del scaler
 
 #%% build and train model
     
@@ -311,7 +294,7 @@ base_model = SVC(class_weight = 'balanced', random_state = random_state,
 # Complement Naive-Bayes
    
 #parameters =    {
-#                'alpha': sp.stats.reciprocal(1e-1, 1e4),
+#                'alpha': sp.stats.reciprocal(1e-2, 1e5),
 #                'norm': [True, False]
 #                }
 #
@@ -323,7 +306,7 @@ base_model = SVC(class_weight = 'balanced', random_state = random_state,
 #                    n_jobs = -1, cv = cv, refit = True, iid = False)
 grid = RandomizedSearchCV(base_model, parameters, scoring = scoring, 
                           n_jobs = -1, cv = cv, refit = True, iid = False,
-                          n_iter = 5000, random_state = random_state)
+                          n_iter = 10000, random_state = random_state)
 
 # train model using parameter search
 
@@ -442,7 +425,38 @@ for filetype in ['pdf', 'png', 'eps']:
 variable_names = %who_ls DataFrame ndarray list dict str bool int int64 float float64
 variables = dict((name, eval(name)) for name in variable_names)
 
-# save model
-    
 pickle.dump(variables, open(os.path.join(model_dir, 'variables.pkl'), 'wb'))
+
+# save model
+
 pickle.dump(best_model, open(os.path.join(model_dir, 'scikit_model.pkl'), 'wb'))
+
+# save grid
+
+joblib.dump(grid, os.path.join(model_dir, 'grid.joblib'))
+
+# save data pre-processing functions
+
+if impute_mean:
+    
+    joblib.dump(imp_mean, os.path.join(model_dir, 'imputer_mean.joblib'))
+    
+if impute_mode:
+    
+    joblib.dump(imp_mode, os.path.join(model_dir, 'imputer_mode.joblib'))
+    
+if impute_cons:
+    
+    joblib.dump(imp_cons, os.path.join(model_dir, 'imputer_cons.joblib'))
+    
+if oversample is not None:
+    
+    joblib.dump(osm, os.path.join(model_dir, 'oversampler.joblib'))
+    
+if discretise:
+    
+    joblib.dump(enc, os.path.join(model_dir, 'discretiser.joblib'))
+    
+if scaling_type == 'minmax' or scaling_type == 'standard':
+    
+    joblib.dump(scaler, os.path.join(model_dir, 'scaler.joblib'))
