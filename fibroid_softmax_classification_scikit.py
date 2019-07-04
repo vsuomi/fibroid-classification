@@ -299,6 +299,18 @@ base_model = SVC(class_weight = 'balanced', random_state = random_state,
 #                }
 #
 #base_model = ComplementNB()
+    
+# Random Forest
+    
+#parameters =    {
+#                'n_estimators': sp.stats.randint(5, 200),
+#                'min_samples_split': sp.stats.randint(2, 4),
+#                'max_depth': [2, 3, None],
+#                'max_features': ['sqrt', None]
+#                }
+#
+#base_model = RandomForestClassifier(class_weight = 'balanced', random_state = random_state,
+#                                    n_jobs = -1)
 
 # define parameter search method
 
@@ -414,6 +426,10 @@ with open(os.path.join(model_dir, 'parameters.txt'), 'w') as text_file:
     text_file.write('scoring: %s\n' % scoring)
     text_file.write('split_ratio: %.1f\n' % split_ratio)
     text_file.write('cv: %d\n' % cv)
+    text_file.write('training_score: %.2f\n' % training_score)
+    text_file.write('validation_score: %.2f\n' % validation_score)
+    text_file.write('testing_score: %.2f\n' % testing_score)
+    text_file.write('Best parameters: %s\n' % grid.best_params_)
     
 # save figures
     
