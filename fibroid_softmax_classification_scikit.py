@@ -26,6 +26,7 @@ Created on Wed Mar 20 15:45:35 2019
 import os
 import time
 import pickle
+import joblib
 import pandas as pd
 import numpy as np
 import scipy as sp
@@ -33,7 +34,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
-from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer
 from sklearn.impute import SimpleImputer
